@@ -64,12 +64,12 @@ export async function buildSeedDatabase(): Promise<Database> {
 
   for (let i = 0; i < 24; i++) {
     const female = i % 2 === 0;
-    const firstName = female ? FIRST_F[i % FIRST_F.length] : FIRST_M[i % FIRST_M.length];
-    const lastName = LAST[i % LAST.length];
+    const firstName = (female ? FIRST_F[i % FIRST_F.length] : FIRST_M[i % FIRST_M.length])!;
+    const lastName = LAST[i % LAST.length]!;
     const ageMonths = 4 + ((i * 7) % 40);
     const birth = new Date();
     birth.setMonth(birth.getMonth() - ageMonths);
-    const section = sections[ageMonths < 12 ? 0 : ageMonths < 24 ? 1 : 2];
+    const section = sections[ageMonths < 12 ? 0 : ageMonths < 24 ? 1 : 2]!;
     const status = i >= 22 ? "Préinscrit" : i === 21 ? "Sorti" : "Inscrit";
     const childId = uid("enf", i + 1);
 
@@ -97,12 +97,12 @@ export async function buildSeedDatabase(): Promise<Database> {
     const parentId = uid("par", i + 1);
     parents.push({
       id: parentId,
-      firstName: female ? FIRST_M[(i + 3) % FIRST_M.length] : FIRST_F[(i + 2) % FIRST_F.length],
+      firstName: (female ? FIRST_M[(i + 3) % FIRST_M.length] : FIRST_F[(i + 2) % FIRST_F.length])!,
       lastName,
       phone: `+237 6${String(70000000 + i * 137).slice(0, 8)}`,
       email: `${lastName.toLowerCase()}${i}@exemple.fr`,
       address: `${10 + i} rue des Acacias`,
-      job: ["Enseignant", "Infirmier", "Commerçant", "Ingénieur"][i % 4],
+      job: ["Enseignant", "Infirmier", "Commerçant", "Ingénieur"][i % 4]!,
       idDocument: `CNI-${900000 + i}`,
       isDemo: true,
     });
@@ -161,7 +161,7 @@ export async function buildSeedDatabase(): Promise<Database> {
           invoiceId,
           date: daysAgo(10),
           amount: paid,
-          method: (["Espèces", "Virement", "Mobile money", "Chèque"] as const)[i % 4],
+          method: (["Espèces", "Virement", "Mobile money", "Chèque"] as const)[i % 4]!,
           recordedBy: "usr-001",
           isDemo: true,
         });
