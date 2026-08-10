@@ -1,24 +1,349 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  Baby,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  LogIn,
+  LogOut,
+  ReceiptText,
+  FileWarning,
+  HeartPulse,
+  Users,
+  Gauge,
+  Cake,
+  FileSignature,
+  Plus,
+  CalendarX,
+  NotebookPen,
+  Wallet,
+  DatabaseBackup,
+  Activity as ActivityIcon,
+} from "lucide-react";
+import { AppShell } from "@/components/layout/app-shell";
+import { PageHeader } from "@/components/common/page-header";
+import { StatCard } from "@/components/common/stat-card";
+import { StatusPill } from "@/components/common/status-pill";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/lib/auth/auth-context";
+import { logAction, mutate, useDatabase } from "@/lib/data/db";
+import {
+  ageLabel,
+  computeDashboard,
+  formatDateTime,
+  formatMoney,
+  fullName,
+  initials,
+} from "@/lib/business/stats";
+import { toast } from "sonner";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "Tableau de bord — KAKO Manager" },
+      {
+        name: "description",
+        content:
+          "Pilotez votre crèche au quotidien : présences, alertes, impayés, occupation et actions rapides.",
+      },
+      { property: "og:title", content: "Tableau de bord — KAKO Manager" },
+      {
+        property: "og:description",
+        content: "Vue opérationnelle de la journée : présences, alertes et indicateurs clés.",
+      },
+    ],
+  }),
+  component: DashboardPage,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function DashboardPage() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
+    <AppShell permission="dashboard.view">
+      <Dashboard />
+    </AppShell>
+  );
+}
+
+function Dashboard() {
+  const db = useDatabase();
+  const { user, can } = useAuth();
+
+  if (!db) return null;
+  const s = computeDashboard(db);
+  const currency = db.establishment.currency;
+
+  const quickActions = [
+    { label: "Ajouter un enfant", icon: Plus, to: "/enfants", perm: "children.edit" as const },
+    { label: "Enregistrer une arrivée", icon: LogIn, to: "/presences", perm: "attendance.edit" as const },
+    { label: "Enregistrer un départ", icon: LogOut, to: "/presences", perm: "attendance.edit" as const },
+    { label: "Ajouter une absence", icon: CalendarX, to: "/presences", perm: "attendance.edit" as const },
+    { label: "Ajouter une transmission", icon: NotebookPen, to: "/transmissions", perm: "transmissions.edit" as const },
+    { label: "Créer une facture", icon: ReceiptText, to: "/facturation", perm: "billing.edit" as const },
+    { label: "Enregistrer un paiement", icon: Wallet, to: "/paiements", perm: "payments.manage" as const },
+  ].filter((a) => can(a.perm));
+
+  async function handleBackup() {
+    const label = `Sauvegarde du ${new Date().toLocaleString("fr-FR")}`;
+    await mutate((d) => {
+      d.backups.unshift({
+        id: `bkp-${Date.now()}`,
+        at: new Date().toISOString(),
+        label,
+        size: JSON.stringify(d).length,
+        kind: "manuelle",
+      });
+    });
+    await logAction(user, "Sauvegarde manuelle", label);
+    toast.success("Sauvegarde locale créée", { description: label });
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title={`Bonjour ${user?.fullName.split(" ")[0]} 👋`}
+        description={`${db.establishment.name} — résumé de la journée`}
+        actions={
+          can("backup.manage") ? (
+            <Button variant="outline" onClick={() => void handleBackup()}>
+              <DatabaseBackup className="mr-2 size-4" /> Faire une sauvegarde
+            </Button>
+          ) : null
+        }
       />
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Enfants inscrits" value={s.enrolled} icon={Baby} tone="primary" hint={`Capacité : ${db.establishment.capacity} places`} />
+        <StatCard label="Présents aujourd'hui" value={s.present} icon={CheckCircle2} tone="success" hint={`${s.departed} déjà partis`} />
+        <StatCard label="Absents" value={s.absent} icon={XCircle} tone="danger" hint={`${s.expected} encore attendus`} />
+        <StatCard label="Retards" value={s.late} icon={Clock} tone="warning" hint="Arrivées après l'horaire prévu" />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <section className="space-y-6">
+          <div className="rounded-xl border bg-card p-5 shadow-card">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:justify-between">
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold">Taux d'occupation</h2>
+                <p className="text-sm text-muted-foreground">
+                  {s.enrolled} enfants inscrits sur {db.establishment.capacity} places
+                </p>
+              </div>
+              <span className="shrink-0 text-2xl font-bold tabular-nums">{s.occupancy}%</span>
+            </div>
+            <Progress value={s.occupancy} className="mt-4 h-2" />
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              {db.sections.map((sec) => {
+                const count = db.children.filter(
+                  (c) => c.sectionId === sec.id && c.status === "Inscrit",
+                ).length;
+                return (
+                  <div key={sec.id} className="rounded-lg border bg-muted/30 p-3">
+                    <p className="truncate text-sm font-medium">{sec.name}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {count} / {sec.capacity} places
+                    </p>
+                    <Progress
+                      value={Math.round((count / sec.capacity) * 100)}
+                      className="mt-2 h-1.5"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="rounded-xl border bg-card shadow-card">
+            <div className="flex items-center justify-between border-b px-5 py-4">
+              <h2 className="text-base font-semibold">Présences du jour</h2>
+              <Link
+                to="/presences"
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                Ouvrir le pointage
+              </Link>
+            </div>
+            <ul className="divide-y">
+              {s.todayAttendance.slice(0, 6).map((a) => {
+                const child = db.children.find((c) => c.id === a.childId);
+                if (!child) return null;
+                const tone =
+                  a.state === "present"
+                    ? "success"
+                    : a.state === "absent"
+                      ? "danger"
+                      : a.state === "parti"
+                        ? "info"
+                        : "warning";
+                const label =
+                  a.state === "present"
+                    ? "Présent"
+                    : a.state === "absent"
+                      ? "Absent"
+                      : a.state === "parti"
+                        ? "Parti"
+                        : "Attendu";
+                return (
+                  <li key={a.id} className="flex items-center gap-3 px-5 py-3">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                      {initials(child)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{fullName(child)}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {ageLabel(child.birthDate)} ·{" "}
+                        {db.sections.find((x) => x.id === child.sectionId)?.name ?? "Sans section"}
+                      </p>
+                    </div>
+                    <span className="hidden shrink-0 text-xs text-muted-foreground sm:block">
+                      {a.arrivalTime ? `Arrivée ${a.arrivalTime}` : "—"}
+                    </span>
+                    <StatusPill tone={tone}>{label}</StatusPill>
+                  </li>
+                );
+              })}
+              {s.todayAttendance.length === 0 && (
+                <li className="px-5 py-8 text-center text-sm text-muted-foreground">
+                  Aucun pointage enregistré aujourd'hui.
+                </li>
+              )}
+            </ul>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              label="Factures impayées"
+              value={s.unpaidInvoices}
+              icon={ReceiptText}
+              tone="danger"
+              hint={formatMoney(s.unpaidAmount, currency)}
+            />
+            <StatCard label="Documents manquants" value={s.missingDocuments} icon={FileWarning} tone="warning" hint="Dossiers incomplets" />
+            <StatCard label="Alertes médicales" value={s.medicalAlerts} icon={HeartPulse} tone="danger" hint="Allergies et traitements" />
+            <StatCard
+              label="Personnel présent"
+              value={`${s.staffPresent}/${s.staffTotal}`}
+              icon={Users}
+              tone="info"
+              hint="Équipe du jour"
+            />
+          </div>
+        </section>
+
+        <aside className="space-y-6">
+          <div className="rounded-xl border bg-card p-5 shadow-card">
+            <h2 className="text-base font-semibold">Actions rapides</h2>
+            <div className="mt-4 grid gap-2">
+              {quickActions.map((a) => (
+                <Button key={a.label} variant="outline" className="justify-start" asChild>
+                  <Link to={a.to}>
+                    <a.icon className="mr-2 size-4 text-primary" />
+                    {a.label}
+                  </Link>
+                </Button>
+              ))}
+              {can("backup.manage") && (
+                <Button variant="outline" className="justify-start" onClick={() => void handleBackup()}>
+                  <DatabaseBackup className="mr-2 size-4 text-primary" /> Faire une sauvegarde
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-xl border bg-card p-5 shadow-card">
+            <h2 className="text-base font-semibold">Alertes importantes</h2>
+            <ul className="mt-3 space-y-2 text-sm">
+              <AlertRow
+                icon={Gauge}
+                tone={s.occupancy > 95 ? "danger" : "success"}
+                text={
+                  s.occupancy > 95
+                    ? "Capacité d'accueil presque atteinte"
+                    : "Capacité d'accueil maîtrisée"
+                }
+              />
+              <AlertRow
+                icon={FileSignature}
+                tone={s.expiringContracts.length ? "warning" : "success"}
+                text={`${s.expiringContracts.length} contrat(s) arrivant à expiration sous 30 jours`}
+              />
+              <AlertRow
+                icon={HeartPulse}
+                tone={s.medicalAlerts ? "danger" : "success"}
+                text={`${s.medicalAlerts} enfant(s) avec alerte médicale`}
+              />
+              <AlertRow
+                icon={ReceiptText}
+                tone={s.unpaidInvoices ? "warning" : "success"}
+                text={`${s.unpaidInvoices} facture(s) en attente de règlement`}
+              />
+            </ul>
+          </div>
+
+          <div className="rounded-xl border bg-card p-5 shadow-card">
+            <h2 className="flex items-center gap-2 text-base font-semibold">
+              <Cake className="size-4 text-accent" /> Anniversaires à venir
+            </h2>
+            <ul className="mt-3 space-y-2">
+              {s.birthdays.slice(0, 4).map((c) => (
+                <li key={c.id} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="truncate">{fullName(c)}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {new Date(c.birthDate).toLocaleDateString("fr-FR", {
+                      day: "2-digit",
+                      month: "short",
+                    })}
+                  </span>
+                </li>
+              ))}
+              {s.birthdays.length === 0 && (
+                <li className="text-sm text-muted-foreground">Aucun anniversaire sous 30 jours.</li>
+              )}
+            </ul>
+          </div>
+
+          <div className="rounded-xl border bg-card p-5 shadow-card">
+            <h2 className="flex items-center gap-2 text-base font-semibold">
+              <ActivityIcon className="size-4 text-primary" /> Activité récente
+            </h2>
+            <ul className="mt-3 space-y-3">
+              {db.auditLogs.slice(0, 5).map((log) => (
+                <li key={log.id} className="text-sm">
+                  <p className="font-medium">{log.action}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {log.userName} · {formatDateTime(log.at)}
+                  </p>
+                </li>
+              ))}
+              {db.auditLogs.length === 0 && (
+                <li className="text-sm text-muted-foreground">Aucune action enregistrée.</li>
+              )}
+            </ul>
+          </div>
+        </aside>
+      </div>
     </div>
+  );
+}
+
+function AlertRow({
+  icon: Icon,
+  tone,
+  text,
+}: {
+  icon: typeof Gauge;
+  tone: "success" | "warning" | "danger";
+  text: string;
+}) {
+  const colors = {
+    success: "text-success",
+    warning: "text-warning-foreground",
+    danger: "text-destructive",
+  };
+  return (
+    <li className="flex items-start gap-2.5 rounded-lg border bg-muted/30 px-3 py-2">
+      <Icon className={`mt-0.5 size-4 shrink-0 ${colors[tone]}`} />
+      <span className="text-sm">{text}</span>
+    </li>
   );
 }
