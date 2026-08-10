@@ -10,33 +10,245 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ActivitesRouteImport } from './routes/activites'
+import { Route as ConnexionRouteImport } from './routes/connexion'
+import { Route as DocumentsRouteImport } from './routes/documents'
+import { Route as EnfantsRouteImport } from './routes/enfants'
+import { Route as FacturationRouteImport } from './routes/facturation'
+import { Route as FamillesRouteImport } from './routes/familles'
+import { Route as InscriptionsRouteImport } from './routes/inscriptions'
+import { Route as PaiementsRouteImport } from './routes/paiements'
+import { Route as ParametresRouteImport } from './routes/parametres'
+import { Route as PersonnelRouteImport } from './routes/personnel'
+import { Route as PlanningRouteImport } from './routes/planning'
+import { Route as PresencesRouteImport } from './routes/presences'
+import { Route as RapportsRouteImport } from './routes/rapports'
+import { Route as RepasHygieneRouteImport } from './routes/repas-hygiene'
+import { Route as SauvegardeRouteImport } from './routes/sauvegarde'
+import { Route as TransmissionsRouteImport } from './routes/transmissions'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ActivitesRoute = ActivitesRouteImport.update({
+  id: '/activites',
+  path: '/activites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnexionRoute = ConnexionRouteImport.update({
+  id: '/connexion',
+  path: '/connexion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocumentsRoute = DocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnfantsRoute = EnfantsRouteImport.update({
+  id: '/enfants',
+  path: '/enfants',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FacturationRoute = FacturationRouteImport.update({
+  id: '/facturation',
+  path: '/facturation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FamillesRoute = FamillesRouteImport.update({
+  id: '/familles',
+  path: '/familles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InscriptionsRoute = InscriptionsRouteImport.update({
+  id: '/inscriptions',
+  path: '/inscriptions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaiementsRoute = PaiementsRouteImport.update({
+  id: '/paiements',
+  path: '/paiements',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParametresRoute = ParametresRouteImport.update({
+  id: '/parametres',
+  path: '/parametres',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PersonnelRoute = PersonnelRouteImport.update({
+  id: '/personnel',
+  path: '/personnel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanningRoute = PlanningRouteImport.update({
+  id: '/planning',
+  path: '/planning',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PresencesRoute = PresencesRouteImport.update({
+  id: '/presences',
+  path: '/presences',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RapportsRoute = RapportsRouteImport.update({
+  id: '/rapports',
+  path: '/rapports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RepasHygieneRoute = RepasHygieneRouteImport.update({
+  id: '/repas-hygiene',
+  path: '/repas-hygiene',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SauvegardeRoute = SauvegardeRouteImport.update({
+  id: '/sauvegarde',
+  path: '/sauvegarde',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TransmissionsRoute = TransmissionsRouteImport.update({
+  id: '/transmissions',
+  path: '/transmissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/activites': typeof ActivitesRoute
+  '/connexion': typeof ConnexionRoute
+  '/documents': typeof DocumentsRoute
+  '/enfants': typeof EnfantsRoute
+  '/facturation': typeof FacturationRoute
+  '/familles': typeof FamillesRoute
+  '/inscriptions': typeof InscriptionsRoute
+  '/paiements': typeof PaiementsRoute
+  '/parametres': typeof ParametresRoute
+  '/personnel': typeof PersonnelRoute
+  '/planning': typeof PlanningRoute
+  '/presences': typeof PresencesRoute
+  '/rapports': typeof RapportsRoute
+  '/repas-hygiene': typeof RepasHygieneRoute
+  '/sauvegarde': typeof SauvegardeRoute
+  '/transmissions': typeof TransmissionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/activites': typeof ActivitesRoute
+  '/connexion': typeof ConnexionRoute
+  '/documents': typeof DocumentsRoute
+  '/enfants': typeof EnfantsRoute
+  '/facturation': typeof FacturationRoute
+  '/familles': typeof FamillesRoute
+  '/inscriptions': typeof InscriptionsRoute
+  '/paiements': typeof PaiementsRoute
+  '/parametres': typeof ParametresRoute
+  '/personnel': typeof PersonnelRoute
+  '/planning': typeof PlanningRoute
+  '/presences': typeof PresencesRoute
+  '/rapports': typeof RapportsRoute
+  '/repas-hygiene': typeof RepasHygieneRoute
+  '/sauvegarde': typeof SauvegardeRoute
+  '/transmissions': typeof TransmissionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/activites': typeof ActivitesRoute
+  '/connexion': typeof ConnexionRoute
+  '/documents': typeof DocumentsRoute
+  '/enfants': typeof EnfantsRoute
+  '/facturation': typeof FacturationRoute
+  '/familles': typeof FamillesRoute
+  '/inscriptions': typeof InscriptionsRoute
+  '/paiements': typeof PaiementsRoute
+  '/parametres': typeof ParametresRoute
+  '/personnel': typeof PersonnelRoute
+  '/planning': typeof PlanningRoute
+  '/presences': typeof PresencesRoute
+  '/rapports': typeof RapportsRoute
+  '/repas-hygiene': typeof RepasHygieneRoute
+  '/sauvegarde': typeof SauvegardeRoute
+  '/transmissions': typeof TransmissionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/activites'
+    | '/connexion'
+    | '/documents'
+    | '/enfants'
+    | '/facturation'
+    | '/familles'
+    | '/inscriptions'
+    | '/paiements'
+    | '/parametres'
+    | '/personnel'
+    | '/planning'
+    | '/presences'
+    | '/rapports'
+    | '/repas-hygiene'
+    | '/sauvegarde'
+    | '/transmissions'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/activites'
+    | '/connexion'
+    | '/documents'
+    | '/enfants'
+    | '/facturation'
+    | '/familles'
+    | '/inscriptions'
+    | '/paiements'
+    | '/parametres'
+    | '/personnel'
+    | '/planning'
+    | '/presences'
+    | '/rapports'
+    | '/repas-hygiene'
+    | '/sauvegarde'
+    | '/transmissions'
+  id:
+    | '__root__'
+    | '/'
+    | '/activites'
+    | '/connexion'
+    | '/documents'
+    | '/enfants'
+    | '/facturation'
+    | '/familles'
+    | '/inscriptions'
+    | '/paiements'
+    | '/parametres'
+    | '/personnel'
+    | '/planning'
+    | '/presences'
+    | '/rapports'
+    | '/repas-hygiene'
+    | '/sauvegarde'
+    | '/transmissions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActivitesRoute: typeof ActivitesRoute
+  ConnexionRoute: typeof ConnexionRoute
+  DocumentsRoute: typeof DocumentsRoute
+  EnfantsRoute: typeof EnfantsRoute
+  FacturationRoute: typeof FacturationRoute
+  FamillesRoute: typeof FamillesRoute
+  InscriptionsRoute: typeof InscriptionsRoute
+  PaiementsRoute: typeof PaiementsRoute
+  ParametresRoute: typeof ParametresRoute
+  PersonnelRoute: typeof PersonnelRoute
+  PlanningRoute: typeof PlanningRoute
+  PresencesRoute: typeof PresencesRoute
+  RapportsRoute: typeof RapportsRoute
+  RepasHygieneRoute: typeof RepasHygieneRoute
+  SauvegardeRoute: typeof SauvegardeRoute
+  TransmissionsRoute: typeof TransmissionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +260,140 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/activites': {
+      id: '/activites'
+      path: '/activites'
+      fullPath: '/activites'
+      preLoaderRoute: typeof ActivitesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/connexion': {
+      id: '/connexion'
+      path: '/connexion'
+      fullPath: '/connexion'
+      preLoaderRoute: typeof ConnexionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/documents': {
+      id: '/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof DocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/enfants': {
+      id: '/enfants'
+      path: '/enfants'
+      fullPath: '/enfants'
+      preLoaderRoute: typeof EnfantsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/facturation': {
+      id: '/facturation'
+      path: '/facturation'
+      fullPath: '/facturation'
+      preLoaderRoute: typeof FacturationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/familles': {
+      id: '/familles'
+      path: '/familles'
+      fullPath: '/familles'
+      preLoaderRoute: typeof FamillesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inscriptions': {
+      id: '/inscriptions'
+      path: '/inscriptions'
+      fullPath: '/inscriptions'
+      preLoaderRoute: typeof InscriptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paiements': {
+      id: '/paiements'
+      path: '/paiements'
+      fullPath: '/paiements'
+      preLoaderRoute: typeof PaiementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parametres': {
+      id: '/parametres'
+      path: '/parametres'
+      fullPath: '/parametres'
+      preLoaderRoute: typeof ParametresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/personnel': {
+      id: '/personnel'
+      path: '/personnel'
+      fullPath: '/personnel'
+      preLoaderRoute: typeof PersonnelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/planning': {
+      id: '/planning'
+      path: '/planning'
+      fullPath: '/planning'
+      preLoaderRoute: typeof PlanningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/presences': {
+      id: '/presences'
+      path: '/presences'
+      fullPath: '/presences'
+      preLoaderRoute: typeof PresencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rapports': {
+      id: '/rapports'
+      path: '/rapports'
+      fullPath: '/rapports'
+      preLoaderRoute: typeof RapportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/repas-hygiene': {
+      id: '/repas-hygiene'
+      path: '/repas-hygiene'
+      fullPath: '/repas-hygiene'
+      preLoaderRoute: typeof RepasHygieneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sauvegarde': {
+      id: '/sauvegarde'
+      path: '/sauvegarde'
+      fullPath: '/sauvegarde'
+      preLoaderRoute: typeof SauvegardeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/transmissions': {
+      id: '/transmissions'
+      path: '/transmissions'
+      fullPath: '/transmissions'
+      preLoaderRoute: typeof TransmissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActivitesRoute: ActivitesRoute,
+  ConnexionRoute: ConnexionRoute,
+  DocumentsRoute: DocumentsRoute,
+  EnfantsRoute: EnfantsRoute,
+  FacturationRoute: FacturationRoute,
+  FamillesRoute: FamillesRoute,
+  InscriptionsRoute: InscriptionsRoute,
+  PaiementsRoute: PaiementsRoute,
+  ParametresRoute: ParametresRoute,
+  PersonnelRoute: PersonnelRoute,
+  PlanningRoute: PlanningRoute,
+  PresencesRoute: PresencesRoute,
+  RapportsRoute: RapportsRoute,
+  RepasHygieneRoute: RepasHygieneRoute,
+  SauvegardeRoute: SauvegardeRoute,
+  TransmissionsRoute: TransmissionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

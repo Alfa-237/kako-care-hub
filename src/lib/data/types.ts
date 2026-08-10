@@ -1,0 +1,205 @@
+// Modèles de données KAKO Manager (structure relationnelle locale)
+
+export type ID = string;
+
+export type RoleCode =
+  | "ADMINISTRATEUR"
+  | "DIRECTEUR"
+  | "SECRETAIRE"
+  | "EDUCATEUR"
+  | "COMPTABLE"
+  | "CONSULTATION";
+
+export interface User {
+  id: ID;
+  username: string;
+  fullName: string;
+  passwordHash: string;
+  role: RoleCode;
+  status: "actif" | "suspendu";
+  createdAt: string;
+  lastLoginAt: string | null;
+  isDemo: boolean;
+}
+
+export interface Establishment {
+  id: ID;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  currency: string;
+  legalMentions: string;
+  capacity: number;
+  autoLockMinutes: number;
+}
+
+export interface Section {
+  id: ID;
+  name: string;
+  ageMin: number;
+  ageMax: number;
+  capacity: number;
+  color: string;
+  isDemo: boolean;
+}
+
+export type ChildStatus = "Préinscrit" | "Inscrit" | "Suspendu" | "Sorti";
+
+export interface Child {
+  id: ID;
+  fileNumber: string;
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  gender: "F" | "M";
+  photo: string | null;
+  address: string;
+  registrationDate: string;
+  startDate: string;
+  sectionId: ID | null;
+  status: ChildStatus;
+  language: string;
+  notes: string;
+  medicalAlert: string | null;
+  missingDocuments: string[];
+  contractEndDate: string | null;
+  isDemo: boolean;
+}
+
+export interface Parent {
+  id: ID;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  address: string;
+  job: string;
+  idDocument: string;
+  isDemo: boolean;
+}
+
+export interface ChildParent {
+  id: ID;
+  childId: ID;
+  parentId: ID;
+  relation: string;
+  canPickUp: boolean;
+  isEmergencyContact: boolean;
+  receivesDocuments: boolean;
+  canSign: boolean;
+  isDemo: boolean;
+}
+
+export type AttendanceState = "attendu" | "present" | "parti" | "absent";
+
+export interface Attendance {
+  id: ID;
+  childId: ID;
+  date: string; // YYYY-MM-DD
+  expectedArrival: string | null; // HH:mm
+  expectedDeparture: string | null;
+  arrivalTime: string | null;
+  departureTime: string | null;
+  state: AttendanceState;
+  late: boolean;
+  earlyLeave: boolean;
+  broughtBy: string | null;
+  pickedUpBy: string | null;
+  recordedBy: ID | null;
+  absenceReason: string | null;
+  isDemo: boolean;
+}
+
+export interface Employee {
+  id: ID;
+  firstName: string;
+  lastName: string;
+  jobTitle: string;
+  phone: string;
+  sectionId: ID | null;
+  hireDate: string;
+  contractType: string;
+  presentToday: boolean;
+  isDemo: boolean;
+}
+
+export type InvoiceStatus =
+  | "Non payée"
+  | "Partiellement payée"
+  | "Payée"
+  | "En retard"
+  | "Annulée"
+  | "Remboursée";
+
+export interface Invoice {
+  id: ID;
+  number: string;
+  date: string;
+  dueDate: string;
+  childId: ID;
+  parentId: ID | null;
+  total: number;
+  discount: number;
+  paidAmount: number;
+  status: InvoiceStatus;
+  isDemo: boolean;
+}
+
+export interface Payment {
+  id: ID;
+  invoiceId: ID;
+  date: string;
+  amount: number;
+  method: "Espèces" | "Virement" | "Chèque" | "Carte" | "Mobile money" | "Autre";
+  recordedBy: ID | null;
+  isDemo: boolean;
+}
+
+export interface Activity {
+  id: ID;
+  date: string;
+  title: string;
+  category: string;
+  description: string;
+  childIds: ID[];
+  isDemo: boolean;
+}
+
+export interface AuditLog {
+  id: ID;
+  at: string;
+  userId: ID | null;
+  userName: string;
+  action: string;
+  detail: string;
+}
+
+export interface Backup {
+  id: ID;
+  at: string;
+  label: string;
+  size: number;
+  kind: "manuelle" | "automatique" | "sécurité";
+}
+
+export interface Database {
+  version: number;
+  establishment: Establishment;
+  users: User[];
+  sections: Section[];
+  children: Child[];
+  parents: Parent[];
+  childParents: ChildParent[];
+  attendance: Attendance[];
+  employees: Employee[];
+  invoices: Invoice[];
+  payments: Payment[];
+  activities: Activity[];
+  auditLogs: AuditLog[];
+  backups: Backup[];
+}
+
+export type CollectionKey = {
+  [K in keyof Database]: Database[K] extends Array<unknown> ? K : never;
+}[keyof Database];
