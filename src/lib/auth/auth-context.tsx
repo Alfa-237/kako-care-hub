@@ -76,6 +76,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [session, locked, resetTimer]);
 
+  useEffect(() => {
+    const handler = () => setLocked(true);
+    window.addEventListener("kako:lock", handler);
+    return () => window.removeEventListener("kako:lock", handler);
+  }, []);
+
   const signIn = useCallback<AuthValue["signIn"]>(async (username, password) => {
     const data = await initDatabase();
     const key = username.trim().toLowerCase();
