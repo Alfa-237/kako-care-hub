@@ -101,7 +101,7 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Bonjour ${user?.fullName.split(" ")[0]} 👋`}
+        title={`Bonjour ${user?.fullName.split(" ")[0]}`}
         description={`${db.establishment.name} — résumé de la journée`}
         actions={
           can("backup.manage") ? (
