@@ -19,15 +19,29 @@ interface Session {
   startedAt: string;
 }
 
+export interface SignUpInput {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  crecheName: string;
+  crechePhone: string;
+  city: string;
+  address: string;
+  password: string;
+}
+
 interface AuthValue {
   user: User | null;
   ready: boolean;
   locked: boolean;
   signIn: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  signUp: (input: SignUpInput) => Promise<{ ok: boolean; error?: string }>;
   signOut: () => Promise<void>;
   unlock: (password: string) => Promise<boolean>;
   can: (permission: Permission) => boolean;
 }
+
 
 const AuthContext = createContext<AuthValue | null>(null);
 
