@@ -19,15 +19,29 @@ interface Session {
   startedAt: string;
 }
 
+export interface SignUpInput {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  crecheName: string;
+  crechePhone: string;
+  city: string;
+  address: string;
+  password: string;
+}
+
 interface AuthValue {
   user: User | null;
   ready: boolean;
   locked: boolean;
   signIn: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  signUp: (input: SignUpInput) => Promise<{ ok: boolean; error?: string }>;
   signOut: () => Promise<void>;
   unlock: (password: string) => Promise<boolean>;
   can: (permission: Permission) => boolean;
 }
+
 
 const AuthContext = createContext<AuthValue | null>(null);
 
@@ -90,7 +104,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const secs = Math.ceil((record.until - Date.now()) / 1000);
       return { ok: false, error: `Trop de tentatives. Réessayez dans ${secs} s.` };
     }
-    const found = data.users.find((u) => u.username.toLowerCase() === key);
+    const found = data.users.find(
+      (u) => u.username.toLowerCase() === key || (u.email ?? "").toLowerCase() === key,
+    );
+
     const hash = await hashPassword(password);
     if (!found || found.passwordHash !== hash) {
       const count = (record?.count ?? 0) + 1;
@@ -113,7 +130,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
+  const signUp = useCallback<AuthValue["signUp"]>(async (input) => {
+    const data = await initDatabase();
+    const email = input.email.trim().toLowerCase();
+    const exists = data.users.some(
+      (u) => (u.email ?? "").toLowerCase() === email || u.username.toLowerCase() === email,
+    );
+    if (exists) return { ok: false, error: "Un compte existe déjà avec cette adresse e-mail." };
+
+    const id = `usr-${Date.now().toString(36)}`;
+    const newUser: User = {
+      id,
+      username: email,
+      email,
+      phone: input.phone.trim(),
+      fullName: `${input.firstName.trim()} ${input.lastName.trim()}`.trim(),
+      passwordHash: await hashPassword(input.password),
+      role: "DIRECTEUR",
+      status: "actif",
+      createdAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString(),
+      isDemo: false,
+    };
+
+    const firstRealAccount = !data.users.some((u) => !u.isDemo);
+    await mutate((d) => {
+      d.users.push(newUser);
+      if (firstRealAccount) {
+        d.establishment.name = input.crecheName.trim() || d.establishment.name;
+        d.establishment.phone = input.crechePhone.trim() || d.establishment.phone;
+        d.establishment.address =
+          [input.address.trim(), input.city.trim()].filter(Boolean).join(", ") ||
+          d.establishment.address;
+        d.establishment.email = email;
+      }
+    });
+
+    const next: Session = { userId: id, startedAt: new Date().toISOString() };
+    await storage.write(SESSION_KEY, next);
+    setSession(next);
+    setLocked(false);
+    await logAction(newUser, "Création de compte", `Crèche ${input.crecheName}`);
+    return { ok: true };
+  }, []);
+
   const signOut = useCallback(async () => {
+
     if (user) await logAction(user, "Déconnexion");
     await storage.remove(SESSION_KEY);
     setSession(null);
@@ -138,9 +200,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<AuthValue>(
-    () => ({ user, ready: ready && !!db, locked, signIn, signOut, unlock, can }),
-    [user, ready, db, locked, signIn, signOut, unlock, can],
+    () => ({ user, ready: ready && !!db, locked, signIn, signUp, signOut, unlock, can }),
+    [user, ready, db, locked, signIn, signUp, signOut, unlock, can],
   );
+
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

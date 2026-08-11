@@ -20,7 +20,11 @@ export interface User {
   createdAt: string;
   lastLoginAt: string | null;
   isDemo: boolean;
+  /** Optionnel : renseigné pour les comptes créés via l'inscription. */
+  email?: string;
+  phone?: string;
 }
+
 
 export interface Establishment {
   id: ID;
