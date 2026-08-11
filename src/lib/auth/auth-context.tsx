@@ -104,7 +104,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const secs = Math.ceil((record.until - Date.now()) / 1000);
       return { ok: false, error: `Trop de tentatives. Réessayez dans ${secs} s.` };
     }
-    const found = data.users.find((u) => u.username.toLowerCase() === key);
+    const found = data.users.find(
+      (u) => u.username.toLowerCase() === key || (u.email ?? "").toLowerCase() === key,
+    );
+
     const hash = await hashPassword(password);
     if (!found || found.passwordHash !== hash) {
       const count = (record?.count ?? 0) + 1;
