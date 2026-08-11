@@ -32,6 +32,8 @@ export const Route = createFileRoute("/inscription")({
 
 type Field = keyof SignUpInput;
 
+type ErrorMap = Partial<Record<Field | "confirm" | "global", string | undefined>>;
+
 const EMPTY: SignUpInput = {
   firstName: "",
   lastName: "",
@@ -49,7 +51,7 @@ function SignUpPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState<SignUpInput>(EMPTY);
   const [confirm, setConfirm] = useState("");
-  const [errors, setErrors] = useState<Partial<Record<Field | "confirm" | "global", string>>>({});
+  const [errors, setErrors] = useState<ErrorMap>({});
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -64,7 +66,7 @@ function SignUpPage() {
   };
 
   function validate() {
-    const next: Partial<Record<Field | "confirm" | "global", string>> = {};
+    const next: ErrorMap = {};
     if (!form.firstName.trim()) next.firstName = "Prénom obligatoire.";
     if (!form.lastName.trim()) next.lastName = "Nom obligatoire.";
     if (!form.phone.trim()) next.phone = "Téléphone obligatoire.";
@@ -356,7 +358,7 @@ function FieldInput({
   label,
   error,
   ...props
-}: React.ComponentProps<typeof Input> & { id: string; label: string; error?: string }) {
+}: React.ComponentProps<typeof Input> & { id: string; label: string; error?: string | undefined }) {
   return (
     <div className="space-y-2">
       <Label htmlFor={id} className="text-sm">

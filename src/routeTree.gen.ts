@@ -16,6 +16,7 @@ import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as EnfantsRouteImport } from './routes/enfants'
 import { Route as FacturationRouteImport } from './routes/facturation'
 import { Route as FamillesRouteImport } from './routes/familles'
+import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as InscriptionsRouteImport } from './routes/inscriptions'
 import { Route as PaiementsRouteImport } from './routes/paiements'
 import { Route as ParametresRouteImport } from './routes/parametres'
@@ -60,6 +61,11 @@ const FacturationRoute = FacturationRouteImport.update({
 const FamillesRoute = FamillesRouteImport.update({
   id: '/familles',
   path: '/familles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InscriptionRoute = InscriptionRouteImport.update({
+  id: '/inscription',
+  path: '/inscription',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InscriptionsRoute = InscriptionsRouteImport.update({
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/enfants': typeof EnfantsRoute
   '/facturation': typeof FacturationRoute
   '/familles': typeof FamillesRoute
+  '/inscription': typeof InscriptionRoute
   '/inscriptions': typeof InscriptionsRoute
   '/paiements': typeof PaiementsRoute
   '/parametres': typeof ParametresRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/enfants': typeof EnfantsRoute
   '/facturation': typeof FacturationRoute
   '/familles': typeof FamillesRoute
+  '/inscription': typeof InscriptionRoute
   '/inscriptions': typeof InscriptionsRoute
   '/paiements': typeof PaiementsRoute
   '/parametres': typeof ParametresRoute
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/enfants': typeof EnfantsRoute
   '/facturation': typeof FacturationRoute
   '/familles': typeof FamillesRoute
+  '/inscription': typeof InscriptionRoute
   '/inscriptions': typeof InscriptionsRoute
   '/paiements': typeof PaiementsRoute
   '/parametres': typeof ParametresRoute
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/enfants'
     | '/facturation'
     | '/familles'
+    | '/inscription'
     | '/inscriptions'
     | '/paiements'
     | '/parametres'
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/enfants'
     | '/facturation'
     | '/familles'
+    | '/inscription'
     | '/inscriptions'
     | '/paiements'
     | '/parametres'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/enfants'
     | '/facturation'
     | '/familles'
+    | '/inscription'
     | '/inscriptions'
     | '/paiements'
     | '/parametres'
@@ -239,6 +251,7 @@ export interface RootRouteChildren {
   EnfantsRoute: typeof EnfantsRoute
   FacturationRoute: typeof FacturationRoute
   FamillesRoute: typeof FamillesRoute
+  InscriptionRoute: typeof InscriptionRoute
   InscriptionsRoute: typeof InscriptionsRoute
   PaiementsRoute: typeof PaiementsRoute
   ParametresRoute: typeof ParametresRoute
@@ -300,6 +313,13 @@ declare module '@tanstack/react-router' {
       path: '/familles'
       fullPath: '/familles'
       preLoaderRoute: typeof FamillesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inscription': {
+      id: '/inscription'
+      path: '/inscription'
+      fullPath: '/inscription'
+      preLoaderRoute: typeof InscriptionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inscriptions': {
@@ -383,6 +403,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnfantsRoute: EnfantsRoute,
   FacturationRoute: FacturationRoute,
   FamillesRoute: FamillesRoute,
+  InscriptionRoute: InscriptionRoute,
   InscriptionsRoute: InscriptionsRoute,
   PaiementsRoute: PaiementsRoute,
   ParametresRoute: ParametresRoute,
@@ -397,13 +418,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
