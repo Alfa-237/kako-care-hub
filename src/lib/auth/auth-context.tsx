@@ -130,7 +130,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { ok: true };
   }, []);
 
+  const signUp = useCallback<AuthValue["signUp"]>(async (input) => {
+    const data = await initDatabase();
+    const email = input.email.trim().toLowerCase();
+    const exists = data.users.some(
+      (u) => (u.email ?? "").toLowerCase() === email || u.username.toLowerCase() === email,
+    );
+    if (exists) return { ok: false, error: "Un compte existe déjà avec cette adresse e-mail." };
+
+    const id = `usr-${Date.now().toString(36)}`;
+    const newUser: User = {
+      id,
+      username: email,
+      email,
+      phone: input.phone.trim(),
+      fullName: `${input.firstName.trim()} ${input.lastName.trim()}`.trim(),
+      passwordHash: await hashPassword(input.password),
+      role: "DIRECTEUR",
+      status: "actif",
+      createdAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString(),
+      isDemo: false,
+    };
+
+    const firstRealAccount = !data.users.some((u) => !u.isDemo);
+    await mutate((d) => {
+      d.users.push(newUser);
+      if (firstRealAccount) {
+        d.establishment.name = input.crecheName.trim() || d.establishment.name;
+        d.establishment.phone = input.crechePhone.trim() || d.establishment.phone;
+        d.establishment.address =
+          [input.address.trim(), input.city.trim()].filter(Boolean).join(", ") ||
+          d.establishment.address;
+        d.establishment.email = email;
+      }
+    });
+
+    const next: Session = { userId: id, startedAt: new Date().toISOString() };
+    await storage.write(SESSION_KEY, next);
+    setSession(next);
+    setLocked(false);
+    await logAction(newUser, "Création de compte", `Crèche ${input.crecheName}`);
+    return { ok: true };
+  }, []);
+
   const signOut = useCallback(async () => {
+
     if (user) await logAction(user, "Déconnexion");
     await storage.remove(SESSION_KEY);
     setSession(null);
