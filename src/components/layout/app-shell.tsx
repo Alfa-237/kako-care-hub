@@ -86,6 +86,19 @@ export function AppShell({
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    setCollapsed(window.localStorage.getItem("kako:sidebar-collapsed") === "1");
+  }, []);
+
+  const toggleSidebar = () =>
+    setCollapsed((c) => {
+      const next = !c;
+      if (typeof window !== "undefined")
+        window.localStorage.setItem("kako:sidebar-collapsed", next ? "1" : "0");
+      return next;
+    });
+
+  useEffect(() => {
     if (ready && !user) navigate({ to: "/connexion", replace: true });
   }, [ready, user, navigate]);
 
@@ -97,12 +110,12 @@ export function AppShell({
     <div className="flex min-h-screen w-full bg-background">
       <div className="hidden md:block">
         <div className="sticky top-0">
-          <AppSidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
+          <AppSidebar collapsed={collapsed} onToggle={toggleSidebar} />
         </div>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <AppHeader />
-        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 md:px-8">
+        <AppHeader collapsed={collapsed} onToggleSidebar={toggleSidebar} />
+        <main className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-5 md:px-7 md:py-6">
           {permission && !can(permission) ? <AccessDenied /> : children}
         </main>
       </div>
