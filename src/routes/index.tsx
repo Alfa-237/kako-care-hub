@@ -99,9 +99,9 @@ function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader
-        title={`Bonjour ${user?.fullName.split(" ")[0]}`}
+        title={`Bonjour ${user?.fullName.split(" ")[0]} 👋`}
         description={`${db.establishment.name} — résumé de la journée`}
         actions={
           can("backup.manage") ? (
@@ -119,17 +119,19 @@ function Dashboard() {
         <StatCard label="Retards" value={s.late} icon={Clock} tone="warning" hint="Arrivées après l'horaire prévu" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <section className="space-y-6">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <section className="space-y-5">
           <div className="rounded-xl border bg-card p-5 shadow-card">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:justify-between">
               <div className="min-w-0">
-                <h2 className="text-base font-semibold">Taux d'occupation</h2>
-                <p className="text-sm text-muted-foreground">
+                <h2 className="text-[15px] font-semibold tracking-tight">Taux d'occupation</h2>
+                <p className="text-[13px] text-muted-foreground">
                   {s.enrolled} enfants inscrits sur {db.establishment.capacity} places
                 </p>
               </div>
-              <span className="shrink-0 text-2xl font-bold tabular-nums">{s.occupancy}%</span>
+              <span className="shrink-0 text-2xl font-bold tabular-nums text-primary">
+                {s.occupancy}%
+              </span>
             </div>
             <Progress value={s.occupancy} className="mt-4 h-2" />
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -138,9 +140,12 @@ function Dashboard() {
                   (c) => c.sectionId === sec.id && c.status === "Inscrit",
                 ).length;
                 return (
-                  <div key={sec.id} className="rounded-lg border bg-muted/30 p-3">
-                    <p className="truncate text-sm font-medium">{sec.name}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
+                  <div
+                    key={sec.id}
+                    className="rounded-lg border bg-muted/30 p-3 transition-colors hover:border-primary/30 hover:bg-muted/50"
+                  >
+                    <p className="truncate text-[13px] font-semibold">{sec.name}</p>
+                    <p className="mt-1 text-xs text-muted-foreground tabular-nums">
                       {count} / {sec.capacity} places
                     </p>
                     <Progress
@@ -153,12 +158,12 @@ function Dashboard() {
             </div>
           </div>
 
-          <div className="rounded-xl border bg-card shadow-card">
-            <div className="flex items-center justify-between border-b px-5 py-4">
-              <h2 className="text-base font-semibold">Présences du jour</h2>
+          <div className="overflow-hidden rounded-xl border bg-card shadow-card">
+            <div className="flex items-center justify-between gap-3 border-b bg-muted/25 px-5 py-3">
+              <h2 className="text-[15px] font-semibold tracking-tight">Présences du jour</h2>
               <Link
                 to="/presences"
-                className="text-sm font-medium text-primary hover:underline"
+                className="text-[13px] font-medium text-primary transition-colors hover:underline"
               >
                 Ouvrir le pointage
               </Link>
@@ -184,18 +189,21 @@ function Dashboard() {
                         ? "Parti"
                         : "Attendu";
                 return (
-                  <li key={a.id} className="flex items-center gap-3 px-5 py-3">
+                  <li
+                    key={a.id}
+                    className="flex items-center gap-3 px-5 py-2.5 transition-colors hover:bg-muted/40"
+                  >
                     <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-bold text-primary">
                       {initials(child)}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{fullName(child)}</p>
+                      <p className="truncate text-[13.5px] font-medium">{fullName(child)}</p>
                       <p className="truncate text-xs text-muted-foreground">
                         {ageLabel(child.birthDate)} ·{" "}
                         {db.sections.find((x) => x.id === child.sectionId)?.name ?? "Sans section"}
                       </p>
                     </div>
-                    <span className="hidden shrink-0 text-xs text-muted-foreground sm:block">
+                    <span className="hidden shrink-0 text-xs tabular-nums text-muted-foreground sm:block">
                       {a.arrivalTime ? `Arrivée ${a.arrivalTime}` : "—"}
                     </span>
                     <StatusPill tone={tone}>{label}</StatusPill>
