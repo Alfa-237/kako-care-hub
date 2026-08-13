@@ -238,10 +238,9 @@ function Dashboard() {
           </div>
         </section>
 
-        <aside className="space-y-6">
-          <div className="rounded-xl border bg-card p-5 shadow-card">
-            <h2 className="text-base font-semibold">Actions rapides</h2>
-            <div className="mt-4 grid gap-2">
+        <aside className="space-y-5">
+          <Panel title="Actions rapides" icon={Sparkles}>
+            <div className="grid gap-2">
               {quickActions.map((a) => (
                 <Button key={a.label} variant="outline" className="justify-start" asChild>
                   <Link to={a.to}>
@@ -256,11 +255,10 @@ function Dashboard() {
                 </Button>
               )}
             </div>
-          </div>
+          </Panel>
 
-          <div className="rounded-xl border bg-card p-5 shadow-card">
-            <h2 className="text-base font-semibold">Alertes importantes</h2>
-            <ul className="mt-3 space-y-2 text-sm">
+          <Panel title="Alertes importantes" icon={Gauge}>
+            <ul className="space-y-2 text-sm">
               <AlertRow
                 icon={Gauge}
                 tone={s.occupancy > 95 ? "danger" : "success"}
@@ -286,17 +284,17 @@ function Dashboard() {
                 text={`${s.unpaidInvoices} facture(s) en attente de règlement`}
               />
             </ul>
-          </div>
+          </Panel>
 
-          <div className="rounded-xl border bg-card p-5 shadow-card">
-            <h2 className="flex items-center gap-2 text-base font-semibold">
-              <Cake className="size-4 text-accent" /> Anniversaires à venir
-            </h2>
-            <ul className="mt-3 space-y-2">
+          <Panel title="Anniversaires à venir" icon={Cake}>
+            <ul className="space-y-1">
               {s.birthdays.slice(0, 4).map((c) => (
-                <li key={c.id} className="flex items-center justify-between gap-3 text-sm">
+                <li
+                  key={c.id}
+                  className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-muted/50"
+                >
                   <span className="truncate">{fullName(c)}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground">
+                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                     {new Date(c.birthDate).toLocaleDateString("fr-FR", {
                       day: "2-digit",
                       month: "short",
@@ -305,29 +303,30 @@ function Dashboard() {
                 </li>
               ))}
               {s.birthdays.length === 0 && (
-                <li className="text-sm text-muted-foreground">Aucun anniversaire sous 30 jours.</li>
+                <li className="px-2 py-1.5 text-sm text-muted-foreground">
+                  Aucun anniversaire sous 30 jours.
+                </li>
               )}
             </ul>
-          </div>
+          </Panel>
 
-          <div className="rounded-xl border bg-card p-5 shadow-card">
-            <h2 className="flex items-center gap-2 text-base font-semibold">
-              <ActivityIcon className="size-4 text-primary" /> Activité récente
-            </h2>
-            <ul className="mt-3 space-y-3">
+          <Panel title="Activité récente" icon={ActivityIcon} bodyClassName="p-0">
+            <ul className="divide-y">
               {db.auditLogs.slice(0, 5).map((log) => (
-                <li key={log.id} className="text-sm">
-                  <p className="font-medium">{log.action}</p>
-                  <p className="text-xs text-muted-foreground">
+                <li key={log.id} className="px-4 py-2.5 text-sm transition-colors hover:bg-muted/40">
+                  <p className="truncate font-medium">{log.action}</p>
+                  <p className="truncate text-xs text-muted-foreground">
                     {log.userName} · {formatDateTime(log.at)}
                   </p>
                 </li>
               ))}
               {db.auditLogs.length === 0 && (
-                <li className="text-sm text-muted-foreground">Aucune action enregistrée.</li>
+                <li className="px-4 py-6 text-center text-sm text-muted-foreground">
+                  Aucune action enregistrée.
+                </li>
               )}
             </ul>
-          </div>
+          </Panel>
         </aside>
       </div>
     </div>
