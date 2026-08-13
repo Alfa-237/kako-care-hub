@@ -19,9 +19,11 @@ import {
   Wallet,
   DatabaseBackup,
   Activity as ActivityIcon,
+  Sparkles,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/common/page-header";
+import { Panel } from "@/components/common/panel";
 import { StatCard } from "@/components/common/stat-card";
 import { StatusPill } from "@/components/common/status-pill";
 import { Button } from "@/components/ui/button";
