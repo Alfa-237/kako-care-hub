@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { cn } from "@/lib/utils";
 import { useMemo, useState, useCallback } from "react";
 import { EnfantsListView, EnfantsCardsView } from "@/components/enfants/enfants-list";
+import { EnfantDetail } from "@/components/enfants/enfant-detail";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -23,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/enfants")({
   head: () => ({
@@ -60,6 +62,12 @@ function Page() {
   } = useEnfants();
 
   const [childToAction, setChildToAction] = useState<{ id: string; action: "archive" | "suspend" | "reactivate" | "delete" } | null>(null);
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+
+  const selectedChild = useMemo(() => {
+    if (!selectedChildId) return null;
+    return children.find(c => c.id === selectedChildId) || null;
+  }, [children, selectedChildId]);
 
   const hasActiveFilters = useMemo(() => {
     return (
@@ -113,8 +121,7 @@ function Page() {
   }, [deleteChild]);
 
   const onViewChild = useCallback((childId: string) => {
-    // Sera implémenté Phase C - navigation vers la fiche détaillée
-    toast.info(`Fiche de l'enfant ${childId} - à implémenter`);
+    setSelectedChildId(childId);
   }, []);
 
   const onEditChild = useCallback((childId: string) => {
@@ -485,6 +492,29 @@ function Page() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Dialog de détail enfant (Phase C) */}
+        <Dialog open={!!selectedChild} onOpenChange={(open) => !open && setSelectedChildId(null)}>
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="sr-only">Fiche de l'enfant</DialogTitle>
+              <DialogDescription className="sr-only">Détails complets de l'enfant</DialogDescription>
+            </DialogHeader>
+            {selectedChild && (
+              <EnfantDetail
+                child={selectedChild}
+                onEdit={onEditChild}
+                onArchive={(id) => { setSelectedChildId(null); confirmAction(id, "archive"); }}
+                onSuspend={(id) => { setSelectedChildId(null); confirmAction(id, "suspend"); }}
+                onReactivate={(id) => { setSelectedChildId(null); confirmAction(id, "reactivate"); }}
+                onDelete={(id) => { setSelectedChildId(null); confirmAction(id, "delete"); }}
+                canEdit={can("children.edit")}
+                canDelete={can("children.delete") && checkCanDelete(selectedChild.id)}
+                canArchive={can("children.archive")}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AppShell>
   );

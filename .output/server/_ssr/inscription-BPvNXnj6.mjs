@@ -1,0 +1,406 @@
+import { r as __toESM } from "../_runtime.mjs";
+import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
+import { _ as useNavigate, g as Link } from "../_libs/@tanstack/react-router+[...].mjs";
+import { P as require_jsx_runtime } from "../_libs/@radix-ui/react-alert-dialog+[...].mjs";
+import { n as useAuth } from "./router-8tilUPKM.mjs";
+import { n as Input, r as Label, t as Button } from "./label-Brx6oFEd.mjs";
+import { F as LoaderCircle, J as EyeOff, Tt as Baby, ot as CircleCheck, q as Eye } from "../_libs/lucide-react.mjs";
+import { i as TEAM_SLIDES, n as AuthSlideshow, t as AuthDecor } from "./slides--aulLHB_.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/inscription-BPvNXnj6.js
+var import_react = /* @__PURE__ */ __toESM(require_react());
+var import_jsx_runtime = require_jsx_runtime();
+var EMPTY = {
+	firstName: "",
+	lastName: "",
+	phone: "",
+	email: "",
+	crecheName: "",
+	crechePhone: "",
+	city: "",
+	address: "",
+	password: ""
+};
+function SignUpPage() {
+	const { signUp, user, ready } = useAuth();
+	const navigate = useNavigate();
+	const [form, setForm] = (0, import_react.useState)(EMPTY);
+	const [confirm, setConfirm] = (0, import_react.useState)("");
+	const [errors, setErrors] = (0, import_react.useState)({});
+	const [show, setShow] = (0, import_react.useState)(false);
+	const [loading, setLoading] = (0, import_react.useState)(false);
+	const [done, setDone] = (0, import_react.useState)(false);
+	(0, import_react.useEffect)(() => {
+		if (ready && user && !done) navigate({
+			to: "/",
+			replace: true
+		});
+	}, [
+		ready,
+		user,
+		done,
+		navigate
+	]);
+	const set = (field) => (e) => {
+		setForm((f) => ({
+			...f,
+			[field]: e.target.value
+		}));
+		setErrors((prev) => ({
+			...prev,
+			[field]: void 0,
+			global: void 0
+		}));
+	};
+	function validate() {
+		const next = {};
+		if (!form.firstName.trim()) next.firstName = "Prénom obligatoire.";
+		if (!form.lastName.trim()) next.lastName = "Nom obligatoire.";
+		if (!form.phone.trim()) next.phone = "Téléphone obligatoire.";
+		if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim())) next.email = "Adresse e-mail invalide.";
+		if (!form.crecheName.trim()) next.crecheName = "Nom de la crèche obligatoire.";
+		if (!form.city.trim()) next.city = "Ville obligatoire.";
+		if (form.password.length < 8) next.password = "8 caractères minimum, avec au moins une lettre et un chiffre.";
+		else if (!/[a-zA-Z]/.test(form.password) || !/\d/.test(form.password)) next.password = "Ajoutez au moins une lettre et un chiffre.";
+		if (confirm !== form.password) next.confirm = "Les mots de passe ne correspondent pas.";
+		setErrors(next);
+		return Object.keys(next).length === 0;
+	}
+	async function handleSubmit(e) {
+		e.preventDefault();
+		if (!validate()) return;
+		setLoading(true);
+		const res = await signUp(form);
+		setLoading(false);
+		if (!res.ok) {
+			setErrors({ global: res.error ?? "Création impossible." });
+			return;
+		}
+		setDone(true);
+		setTimeout(() => navigate({
+			to: "/",
+			replace: true
+		}), 1600);
+	}
+	const strength = (() => {
+		let s = 0;
+		if (form.password.length >= 8) s++;
+		if (/[A-Z]/.test(form.password)) s++;
+		if (/\d/.test(form.password)) s++;
+		if (/[^A-Za-z0-9]/.test(form.password)) s++;
+		return s;
+	})();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "grid min-h-screen bg-background lg:grid-cols-[55fr_45fr]",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
+			className: "relative hidden lg:block",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(AuthSlideshow, {
+				slides: TEAM_SLIDES,
+				interval: 5500,
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex items-center gap-3 text-sidebar-foreground",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "grid size-11 place-items-center rounded-2xl bg-sidebar-primary text-sidebar-primary-foreground shadow-lg",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Baby, { className: "size-5" })
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-lg font-bold tracking-tight",
+							children: "KAKO Manager"
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "max-w-lg animate-fade-in text-sidebar-foreground",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "text-sm font-medium uppercase tracking-[0.22em] text-sidebar-primary",
+								children: "Pour les équipes éducatives"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+								className: "mt-4 text-4xl font-bold leading-[1.12] xl:text-5xl",
+								children: "Construisons ensemble un meilleur environnement pour les enfants."
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-5 max-w-md text-sm leading-relaxed text-sidebar-foreground/80",
+								children: "Les bons outils permettent aux équipes éducatives de se concentrer sur ce qui compte vraiment."
+							})
+						]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-xs text-sidebar-foreground/50",
+						children: "Version prototype — Phase 1"
+					})
+				]
+			})
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "relative flex items-start justify-center px-5 py-10 sm:px-8 lg:items-center",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthDecor, {}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "absolute inset-x-0 top-0 h-28 overflow-hidden lg:hidden",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuthSlideshow, {
+						slides: TEAM_SLIDES,
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "flex items-center gap-2 text-sidebar-foreground",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "grid size-8 place-items-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Baby, { className: "size-4" })
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-sm font-bold",
+								children: "KAKO Manager"
+							})]
+						})
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "relative mt-28 w-full max-w-lg animate-fade-in lg:mt-0",
+					children: done ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "rounded-3xl border bg-card p-9 text-center shadow-[var(--shadow-card)]",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "mx-auto grid size-14 place-items-center rounded-2xl bg-success/12 text-success",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircleCheck, { className: "size-7" })
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+								className: "mt-5 text-2xl font-bold",
+								children: "Bienvenue dans KAKO 🎉"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "mt-2 text-sm text-muted-foreground",
+								children: [
+									"L'espace « ",
+									form.crecheName,
+									" » est prêt. Ouverture de votre tableau de bord…"
+								]
+							})
+						]
+					}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "rounded-3xl border bg-card p-6 shadow-[var(--shadow-card)] sm:p-9",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+								className: "text-2xl font-bold sm:text-3xl",
+								children: "Créer votre espace KAKO"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-2 text-sm text-muted-foreground",
+								children: "Quelques informations suffisent pour commencer."
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+								onSubmit: handleSubmit,
+								className: "mt-7 space-y-7",
+								noValidate: true,
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Section, {
+										title: "Informations personnelles",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "grid gap-4 sm:grid-cols-2",
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FieldInput, {
+													id: "firstName",
+													label: "Prénom",
+													value: form.firstName,
+													onChange: set("firstName"),
+													error: errors.firstName,
+													autoComplete: "given-name"
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FieldInput, {
+													id: "lastName",
+													label: "Nom",
+													value: form.lastName,
+													onChange: set("lastName"),
+													error: errors.lastName,
+													autoComplete: "family-name"
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FieldInput, {
+													id: "phone",
+													label: "Téléphone",
+													value: form.phone,
+													onChange: set("phone"),
+													error: errors.phone,
+													autoComplete: "tel",
+													placeholder: "+237 6 00 00 00 00"
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FieldInput, {
+													id: "email",
+													label: "Adresse e-mail",
+													type: "email",
+													value: form.email,
+													onChange: set("email"),
+													error: errors.email,
+													autoComplete: "email",
+													placeholder: "vous@creche.com"
+												})
+											]
+										})
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Section, {
+										title: "Informations de la crèche",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "grid gap-4 sm:grid-cols-2",
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FieldInput, {
+													id: "crecheName",
+													label: "Nom de la crèche",
+													value: form.crecheName,
+													onChange: set("crecheName"),
+													error: errors.crecheName
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FieldInput, {
+													id: "crechePhone",
+													label: "Téléphone de la crèche",
+													value: form.crechePhone,
+													onChange: set("crechePhone"),
+													error: errors.crechePhone
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FieldInput, {
+													id: "city",
+													label: "Ville",
+													value: form.city,
+													onChange: set("city"),
+													error: errors.city
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FieldInput, {
+													id: "address",
+													label: "Adresse",
+													value: form.address,
+													onChange: set("address"),
+													error: errors.address
+												})
+											]
+										})
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Section, {
+										title: "Sécurité",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											className: "grid gap-4 sm:grid-cols-2",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "space-y-2",
+												children: [
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Label, {
+														htmlFor: "password",
+														className: "text-sm",
+														children: "Mot de passe"
+													}),
+													/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+														className: "relative",
+														children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Input, {
+															id: "password",
+															type: show ? "text" : "password",
+															value: form.password,
+															onChange: set("password"),
+															autoComplete: "new-password",
+															"aria-invalid": !!errors.password,
+															className: "h-12 rounded-xl pr-11 text-base"
+														}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+															type: "button",
+															onClick: () => setShow((s) => !s),
+															"aria-label": show ? "Masquer" : "Afficher",
+															className: "absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-2 text-muted-foreground hover:text-foreground",
+															children: show ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(EyeOff, { className: "size-4" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Eye, { className: "size-4" })
+														})]
+													}),
+													form.password && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+														className: "flex gap-1.5",
+														"aria-hidden": true,
+														children: [
+															0,
+															1,
+															2,
+															3
+														].map((i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: `h-1 flex-1 rounded-full transition-colors ${i < strength ? strength <= 2 ? "bg-warning" : "bg-success" : "bg-border"}` }, i))
+													}),
+													errors.password && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InlineError, { children: errors.password })
+												]
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "space-y-2",
+												children: [
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Label, {
+														htmlFor: "confirm",
+														className: "text-sm",
+														children: "Confirmer le mot de passe"
+													}),
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Input, {
+														id: "confirm",
+														type: show ? "text" : "password",
+														value: confirm,
+														onChange: (e) => {
+															setConfirm(e.target.value);
+															setErrors((p) => ({
+																...p,
+																confirm: void 0
+															}));
+														},
+														autoComplete: "new-password",
+														"aria-invalid": !!errors.confirm,
+														className: "h-12 rounded-xl text-base"
+													}),
+													errors.confirm && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InlineError, { children: errors.confirm })
+												]
+											})]
+										})
+									}),
+									errors.global && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive animate-fade-in",
+										children: errors.global
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+										type: "submit",
+										disabled: loading,
+										className: "h-12 w-full rounded-xl text-base font-semibold transition-transform hover:-translate-y-0.5",
+										children: [loading && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LoaderCircle, { className: "mr-2 size-4 animate-spin" }), "Créer mon compte"]
+									})
+								]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "mt-6 text-center text-sm text-muted-foreground",
+								children: [
+									"Vous avez déjà un compte ?",
+									" ",
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, {
+										to: "/connexion",
+										className: "font-semibold text-primary underline-offset-4 hover:underline",
+										children: "Se connecter"
+									})
+								]
+							})
+						]
+					})
+				})
+			]
+		})]
+	});
+}
+function Section({ title, children }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("fieldset", {
+		className: "space-y-4",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("legend", {
+			className: "mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground",
+			children: title
+		}), children]
+	});
+}
+function InlineError({ children }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+		className: "text-xs font-medium text-destructive animate-fade-in",
+		children
+	});
+}
+function FieldInput({ id, label, error, ...props }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "space-y-2",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Label, {
+				htmlFor: id,
+				className: "text-sm",
+				children: label
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Input, {
+				id,
+				"aria-invalid": !!error,
+				className: "h-12 rounded-xl text-base",
+				...props
+			}),
+			error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InlineError, { children: error })
+		]
+	});
+}
+//#endregion
+export { SignUpPage as component };
