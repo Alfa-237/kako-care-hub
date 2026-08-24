@@ -3,12 +3,7 @@
 export type ID = string;
 
 export type RoleCode =
-  | "ADMINISTRATEUR"
-  | "DIRECTEUR"
-  | "SECRETAIRE"
-  | "EDUCATEUR"
-  | "COMPTABLE"
-  | "CONSULTATION";
+  "ADMINISTRATEUR" | "DIRECTEUR" | "SECRETAIRE" | "EDUCATEUR" | "COMPTABLE" | "CONSULTATION";
 
 export interface User {
   id: ID;
@@ -24,7 +19,6 @@ export interface User {
   email?: string;
   phone?: string;
 }
-
 
 export interface Establishment {
   id: ID;
@@ -129,12 +123,7 @@ export interface Employee {
 }
 
 export type InvoiceStatus =
-  | "Non payée"
-  | "Partiellement payée"
-  | "Payée"
-  | "En retard"
-  | "Annulée"
-  | "Remboursée";
+  "Non payée" | "Partiellement payée" | "Payée" | "En retard" | "Annulée" | "Remboursée";
 
 export interface Invoice {
   id: ID;
@@ -192,6 +181,7 @@ export interface Database {
   establishment: Establishment;
   users: User[];
   sections: Section[];
+  families: import("../models/family").FamilyRecord[];
   children: Child[];
   parents: Parent[];
   childParents: ChildParent[];

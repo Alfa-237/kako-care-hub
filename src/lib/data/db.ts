@@ -2,6 +2,7 @@ import { useCallback, useSyncExternalStore } from "react";
 import { DB_KEY, storage } from "./storage";
 import { buildSeedDatabase } from "./seed";
 import type { Database } from "./types";
+import { deriveFamiliesFromDatabase } from "../business/families";
 
 type Listener = () => void;
 
@@ -13,13 +14,26 @@ function emit() {
   listeners.forEach((l) => l());
 }
 
+/**
+ * Abonnement aux changements de la base (y compris écritures effectuées via
+ * la couche DataService). Retourne une fonction de désabonnement.
+ */
+export function onDatabaseChanged(listener: Listener): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
 export async function initDatabase(): Promise<Database> {
   if (db) return db;
   if (loading) return loading;
   loading = (async () => {
     const existing = await storage.read<Database>(DB_KEY);
-    const next = existing ?? (await buildSeedDatabase());
-    if (!existing) await storage.write(DB_KEY, next);
+    let next = existing ?? (await buildSeedDatabase());
+    // Migration 3A : dérive les entités Family si la base ne les contient pas encore.
+    if (!Array.isArray(next.families)) {
+      next = { ...next, families: deriveFamiliesFromDatabase(next) };
+      await storage.write(DB_KEY, next);
+    }
     db = next;
     emit();
     return next;
@@ -53,6 +67,7 @@ export async function resetDemoData(): Promise<void> {
 
 export async function clearDemoData(): Promise<void> {
   await mutate((d) => {
+    d.families = d.families.filter((x) => !x.isDemo);
     d.children = d.children.filter((x) => !x.isDemo);
     d.parents = d.parents.filter((x) => !x.isDemo);
     d.childParents = d.childParents.filter((x) => !x.isDemo);

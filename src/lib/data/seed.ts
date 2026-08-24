@@ -1,4 +1,10 @@
 import type { Database } from "./types";
+import { deriveFamiliesFromDatabase } from "../business/families";
+
+/** Données de démonstration complètes (seed 3A incluant les entités Family). */
+export function seedDemoData(): Promise<Database> {
+  return buildSeedDatabase();
+}
 
 const uid = (p: string, i: number) => `${p}-${String(i).padStart(3, "0")}`;
 
@@ -49,7 +55,14 @@ export async function buildSeedDatabase(): Promise<Database> {
 
   const sections = [
     { id: "sec-001", name: "Les Poussins", ageMin: 3, ageMax: 12, capacity: 12, color: "poussins" },
-    { id: "sec-002", name: "Les Explorateurs", ageMin: 12, ageMax: 24, capacity: 16, color: "explorateurs" },
+    {
+      id: "sec-002",
+      name: "Les Explorateurs",
+      ageMin: 12,
+      ageMax: 24,
+      capacity: 16,
+      color: "explorateurs",
+    },
     { id: "sec-003", name: "Les Grands", ageMin: 24, ageMax: 48, capacity: 18, color: "grands" },
   ].map((s) => ({ ...s, isDemo: true }));
 
@@ -127,7 +140,8 @@ export async function buildSeedDatabase(): Promise<Database> {
         date: today,
         expectedArrival: "08:00",
         expectedDeparture: "16:30",
-        arrivalTime: state === "present" || state === "parti" ? (mod === 2 ? "09:15" : "07:55") : null,
+        arrivalTime:
+          state === "present" || state === "parti" ? (mod === 2 ? "09:15" : "07:55") : null,
         departureTime: state === "parti" ? "15:20" : null,
         state: state as never,
         late: mod === 2,
@@ -152,7 +166,14 @@ export async function buildSeedDatabase(): Promise<Database> {
         total,
         discount: 0,
         paidAmount: paid,
-        status: paid === 0 ? (i % 4 === 0 ? "En retard" : "Non payée") : paid < total ? "Partiellement payée" : "Payée",
+        status:
+          paid === 0
+            ? i % 4 === 0
+              ? "En retard"
+              : "Non payée"
+            : paid < total
+              ? "Partiellement payée"
+              : "Payée",
         isDemo: true,
       });
       if (paid > 0) {
@@ -203,10 +224,34 @@ export async function buildSeedDatabase(): Promise<Database> {
   }));
 
   const users: Database["users"] = [
-    { id: "usr-001", username: "admin", fullName: "Awa Ndiaye", passwordHash: admin, role: "ADMINISTRATEUR" },
-    { id: "usr-002", username: "directeur", fullName: "Paul Mbarga", passwordHash: directeur, role: "DIRECTEUR" },
-    { id: "usr-003", username: "educateur", fullName: "Claire Marchand", passwordHash: educateur, role: "EDUCATEUR" },
-    { id: "usr-004", username: "comptable", fullName: "Marie Etoga", passwordHash: comptable, role: "COMPTABLE" },
+    {
+      id: "usr-001",
+      username: "admin",
+      fullName: "Awa Ndiaye",
+      passwordHash: admin,
+      role: "ADMINISTRATEUR",
+    },
+    {
+      id: "usr-002",
+      username: "directeur",
+      fullName: "Paul Mbarga",
+      passwordHash: directeur,
+      role: "DIRECTEUR",
+    },
+    {
+      id: "usr-003",
+      username: "educateur",
+      fullName: "Claire Marchand",
+      passwordHash: educateur,
+      role: "EDUCATEUR",
+    },
+    {
+      id: "usr-004",
+      username: "comptable",
+      fullName: "Marie Etoga",
+      passwordHash: comptable,
+      role: "COMPTABLE",
+    },
   ].map((u) => ({
     ...u,
     role: u.role as never,
@@ -216,7 +261,7 @@ export async function buildSeedDatabase(): Promise<Database> {
     isDemo: true,
   }));
 
-  return {
+  const base: Database = {
     version: 1,
     establishment: {
       id: "etab-001",
@@ -231,6 +276,7 @@ export async function buildSeedDatabase(): Promise<Database> {
     },
     users,
     sections,
+    families: [],
     children,
     parents,
     childParents,
@@ -242,4 +288,8 @@ export async function buildSeedDatabase(): Promise<Database> {
     auditLogs: [],
     backups: [],
   };
+
+  // Entités Family persistées, dérivées des relations de démonstration.
+  base.families = deriveFamiliesFromDatabase(base);
+  return base;
 }

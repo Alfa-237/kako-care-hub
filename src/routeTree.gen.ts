@@ -27,6 +27,9 @@ import { Route as RapportsRouteImport } from './routes/rapports'
 import { Route as RepasHygieneRouteImport } from './routes/repas-hygiene'
 import { Route as SauvegardeRouteImport } from './routes/sauvegarde'
 import { Route as TransmissionsRouteImport } from './routes/transmissions'
+import { Route as EnfantsIdRouteImport } from './routes/enfants.$id'
+import { Route as FamillesIndexRouteImport } from './routes/familles.index'
+import { Route as FamillesIdRouteImport } from './routes/familles.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -118,15 +121,30 @@ const TransmissionsRoute = TransmissionsRouteImport.update({
   path: '/transmissions',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EnfantsIdRoute = EnfantsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => EnfantsRoute,
+} as any)
+const FamillesIndexRoute = FamillesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => FamillesRoute,
+} as any)
+const FamillesIdRoute = FamillesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => FamillesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activites': typeof ActivitesRoute
   '/connexion': typeof ConnexionRoute
   '/documents': typeof DocumentsRoute
-  '/enfants': typeof EnfantsRoute
+  '/enfants': typeof EnfantsRouteWithChildren
   '/facturation': typeof FacturationRoute
-  '/familles': typeof FamillesRoute
+  '/familles': typeof FamillesRouteWithChildren
   '/inscription': typeof InscriptionRoute
   '/inscriptions': typeof InscriptionsRoute
   '/paiements': typeof PaiementsRoute
@@ -138,15 +156,17 @@ export interface FileRoutesByFullPath {
   '/repas-hygiene': typeof RepasHygieneRoute
   '/sauvegarde': typeof SauvegardeRoute
   '/transmissions': typeof TransmissionsRoute
+  '/enfants/$id': typeof EnfantsIdRoute
+  '/familles/$id': typeof FamillesIdRoute
+  '/familles/': typeof FamillesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activites': typeof ActivitesRoute
   '/connexion': typeof ConnexionRoute
   '/documents': typeof DocumentsRoute
-  '/enfants': typeof EnfantsRoute
+  '/enfants': typeof EnfantsRouteWithChildren
   '/facturation': typeof FacturationRoute
-  '/familles': typeof FamillesRoute
   '/inscription': typeof InscriptionRoute
   '/inscriptions': typeof InscriptionsRoute
   '/paiements': typeof PaiementsRoute
@@ -158,6 +178,9 @@ export interface FileRoutesByTo {
   '/repas-hygiene': typeof RepasHygieneRoute
   '/sauvegarde': typeof SauvegardeRoute
   '/transmissions': typeof TransmissionsRoute
+  '/enfants/$id': typeof EnfantsIdRoute
+  '/familles/$id': typeof FamillesIdRoute
+  '/familles': typeof FamillesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -165,9 +188,9 @@ export interface FileRoutesById {
   '/activites': typeof ActivitesRoute
   '/connexion': typeof ConnexionRoute
   '/documents': typeof DocumentsRoute
-  '/enfants': typeof EnfantsRoute
+  '/enfants': typeof EnfantsRouteWithChildren
   '/facturation': typeof FacturationRoute
-  '/familles': typeof FamillesRoute
+  '/familles': typeof FamillesRouteWithChildren
   '/inscription': typeof InscriptionRoute
   '/inscriptions': typeof InscriptionsRoute
   '/paiements': typeof PaiementsRoute
@@ -179,6 +202,9 @@ export interface FileRoutesById {
   '/repas-hygiene': typeof RepasHygieneRoute
   '/sauvegarde': typeof SauvegardeRoute
   '/transmissions': typeof TransmissionsRoute
+  '/enfants/$id': typeof EnfantsIdRoute
+  '/familles/$id': typeof FamillesIdRoute
+  '/familles/': typeof FamillesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -201,6 +227,9 @@ export interface FileRouteTypes {
     | '/repas-hygiene'
     | '/sauvegarde'
     | '/transmissions'
+    | '/enfants/$id'
+    | '/familles/$id'
+    | '/familles/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -209,7 +238,6 @@ export interface FileRouteTypes {
     | '/documents'
     | '/enfants'
     | '/facturation'
-    | '/familles'
     | '/inscription'
     | '/inscriptions'
     | '/paiements'
@@ -221,6 +249,9 @@ export interface FileRouteTypes {
     | '/repas-hygiene'
     | '/sauvegarde'
     | '/transmissions'
+    | '/enfants/$id'
+    | '/familles/$id'
+    | '/familles'
   id:
     | '__root__'
     | '/'
@@ -241,6 +272,9 @@ export interface FileRouteTypes {
     | '/repas-hygiene'
     | '/sauvegarde'
     | '/transmissions'
+    | '/enfants/$id'
+    | '/familles/$id'
+    | '/familles/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -248,9 +282,9 @@ export interface RootRouteChildren {
   ActivitesRoute: typeof ActivitesRoute
   ConnexionRoute: typeof ConnexionRoute
   DocumentsRoute: typeof DocumentsRoute
-  EnfantsRoute: typeof EnfantsRoute
+  EnfantsRoute: typeof EnfantsRouteWithChildren
   FacturationRoute: typeof FacturationRoute
-  FamillesRoute: typeof FamillesRoute
+  FamillesRoute: typeof FamillesRouteWithChildren
   InscriptionRoute: typeof InscriptionRoute
   InscriptionsRoute: typeof InscriptionsRoute
   PaiementsRoute: typeof PaiementsRoute
@@ -392,17 +426,63 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TransmissionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/enfants/$id': {
+      id: '/enfants/$id'
+      path: '/$id'
+      fullPath: '/enfants/$id'
+      preLoaderRoute: typeof EnfantsIdRouteImport
+      parentRoute: typeof EnfantsRoute
+    }
+    '/familles/': {
+      id: '/familles/'
+      path: '/'
+      fullPath: '/familles/'
+      preLoaderRoute: typeof FamillesIndexRouteImport
+      parentRoute: typeof FamillesRoute
+    }
+    '/familles/$id': {
+      id: '/familles/$id'
+      path: '/$id'
+      fullPath: '/familles/$id'
+      preLoaderRoute: typeof FamillesIdRouteImport
+      parentRoute: typeof FamillesRoute
+    }
   }
 }
+
+interface EnfantsRouteChildren {
+  EnfantsIdRoute: typeof EnfantsIdRoute
+}
+
+const EnfantsRouteChildren: EnfantsRouteChildren = {
+  EnfantsIdRoute: EnfantsIdRoute,
+}
+
+const EnfantsRouteWithChildren =
+  EnfantsRoute._addFileChildren(EnfantsRouteChildren)
+
+interface FamillesRouteChildren {
+  FamillesIdRoute: typeof FamillesIdRoute
+  FamillesIndexRoute: typeof FamillesIndexRoute
+}
+
+const FamillesRouteChildren: FamillesRouteChildren = {
+  FamillesIdRoute: FamillesIdRoute,
+  FamillesIndexRoute: FamillesIndexRoute,
+}
+
+const FamillesRouteWithChildren = FamillesRoute._addFileChildren(
+  FamillesRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivitesRoute: ActivitesRoute,
   ConnexionRoute: ConnexionRoute,
   DocumentsRoute: DocumentsRoute,
-  EnfantsRoute: EnfantsRoute,
+  EnfantsRoute: EnfantsRouteWithChildren,
   FacturationRoute: FacturationRoute,
-  FamillesRoute: FamillesRoute,
+  FamillesRoute: FamillesRouteWithChildren,
   InscriptionRoute: InscriptionRoute,
   InscriptionsRoute: InscriptionsRoute,
   PaiementsRoute: PaiementsRoute,

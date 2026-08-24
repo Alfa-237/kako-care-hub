@@ -97,7 +97,8 @@ export function AppHeader({
             {results.map((c) => (
               <Link
                 key={c.id}
-                to="/enfants"
+                to="/enfants/$id"
+                params={{ id: c.id }}
                 onClick={() => setQuery("")}
                 className="flex items-center justify-between px-3 py-2 text-sm transition-colors hover:bg-muted"
               >
