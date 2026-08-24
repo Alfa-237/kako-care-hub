@@ -42,7 +42,6 @@ interface AuthValue {
   can: (permission: Permission) => boolean;
 }
 
-
 const AuthContext = createContext<AuthValue | null>(null);
 
 const MAX_ATTEMPTS = 5;
@@ -175,7 +174,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-
     if (user) await logAction(user, "Déconnexion");
     await storage.remove(SESSION_KEY);
     setSession(null);
@@ -194,8 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const can = useCallback(
-    (permission: Permission) =>
-      !!user && (ROLE_PERMISSIONS[user.role] ?? []).includes(permission),
+    (permission: Permission) => !!user && (ROLE_PERMISSIONS[user.role] ?? []).includes(permission),
     [user],
   );
 
@@ -203,7 +200,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({ user, ready: ready && !!db, locked, signIn, signUp, signOut, unlock, can }),
     [user, ready, db, locked, signIn, signUp, signOut, unlock, can],
   );
-
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

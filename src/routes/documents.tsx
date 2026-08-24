@@ -20,7 +20,14 @@ function Page() {
       <ModulePlaceholder
         title="Documents"
         description="Centre documentaire et modèles."
-        planned={["Contrats d'accueil", "Fiches sanitaires", "Autorisations", "Attestations", "Reçus", "Personnalisation du modèle"]}
+        planned={[
+          "Contrats d'accueil",
+          "Fiches sanitaires",
+          "Autorisations",
+          "Attestations",
+          "Reçus",
+          "Personnalisation du modèle",
+        ]}
       />
     </AppShell>
   );

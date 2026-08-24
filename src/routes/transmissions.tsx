@@ -20,7 +20,14 @@ function Page() {
       <ModulePlaceholder
         title="Transmissions quotidiennes"
         description="Cahier de transmission par enfant."
-        planned={["Repas et biberons", "Changes", "Siestes", "Humeur et température", "Observations", "Impression du jour"]}
+        planned={[
+          "Repas et biberons",
+          "Changes",
+          "Siestes",
+          "Humeur et température",
+          "Observations",
+          "Impression du jour",
+        ]}
       />
     </AppShell>
   );

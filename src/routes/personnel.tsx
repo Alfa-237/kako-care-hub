@@ -20,7 +20,14 @@ function Page() {
       <ModulePlaceholder
         title="Personnel"
         description="Employés, plannings et congés."
-        planned={["Fiches employés", "Contrats", "Planning et pointage", "Demandes de congés", "Validation", "Documents"]}
+        planned={[
+          "Fiches employés",
+          "Contrats",
+          "Planning et pointage",
+          "Demandes de congés",
+          "Validation",
+          "Documents",
+        ]}
       />
     </AppShell>
   );

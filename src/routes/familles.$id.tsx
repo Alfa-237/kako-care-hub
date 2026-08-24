@@ -5,7 +5,10 @@ export const Route = createFileRoute("/familles/$id")({
   head: () => ({
     meta: [
       { title: "Fiche famille — KAKO Manager" },
-      { name: "description", content: "Fiche complète d'une famille : responsables, enfants, finances, historique." },
+      {
+        name: "description",
+        content: "Fiche complète d'une famille : responsables, enfants, finances, historique.",
+      },
     ],
   }),
   component: FamilyDetailPage,

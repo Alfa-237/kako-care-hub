@@ -20,7 +20,14 @@ function Page() {
       <ModulePlaceholder
         title="Activités pédagogiques"
         description="Ateliers, catégories et observations."
-        planned={["Création d'activité", "Catégories pédagogiques", "Sélection des enfants", "Observations", "Compétences observées", "Photos locales"]}
+        planned={[
+          "Création d'activité",
+          "Catégories pédagogiques",
+          "Sélection des enfants",
+          "Observations",
+          "Compétences observées",
+          "Photos locales",
+        ]}
       />
     </AppShell>
   );

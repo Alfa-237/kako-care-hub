@@ -6,13 +6,7 @@ import { NAV_GROUPS, NAV_ITEMS } from "./nav-items";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-export function AppSidebar({
-  collapsed,
-  onToggle,
-}: {
-  collapsed: boolean;
-  onToggle: () => void;
-}) {
+export function AppSidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const { user, can, signOut } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 

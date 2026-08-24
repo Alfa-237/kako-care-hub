@@ -20,7 +20,14 @@ function Page() {
       <ModulePlaceholder
         title="Planning"
         description="Planning des enfants et du personnel."
-        planned={["Vue jour / semaine / mois", "Planning par section", "Horaires prévus", "Planning du personnel", "Congés et remplacements", "Alertes de capacité"]}
+        planned={[
+          "Vue jour / semaine / mois",
+          "Planning par section",
+          "Horaires prévus",
+          "Planning du personnel",
+          "Congés et remplacements",
+          "Alertes de capacité",
+        ]}
       />
     </AppShell>
   );

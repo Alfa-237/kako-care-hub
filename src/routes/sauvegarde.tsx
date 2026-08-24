@@ -20,7 +20,14 @@ function Page() {
       <ModulePlaceholder
         title="Sauvegarde et restauration"
         description="Sauvegardes locales et restauration sécurisée."
-        planned={["Sauvegarde manuelle", "Sauvegarde automatique", "Restauration", "Choix du dossier", "Historique", "Sauvegarde de sécurité"]}
+        planned={[
+          "Sauvegarde manuelle",
+          "Sauvegarde automatique",
+          "Restauration",
+          "Choix du dossier",
+          "Historique",
+          "Sauvegarde de sécurité",
+        ]}
       />
     </AppShell>
   );

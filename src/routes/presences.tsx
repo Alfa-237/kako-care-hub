@@ -20,7 +20,14 @@ function Page() {
       <ModulePlaceholder
         title="Présences et pointage"
         description="Arrivées, départs, retards et absences."
-        planned={["Pointage rapide", "Arrivée / départ", "Retards", "Départs anticipés", "Absences justifiées", "Historique des modifications"]}
+        planned={[
+          "Pointage rapide",
+          "Arrivée / départ",
+          "Retards",
+          "Départs anticipés",
+          "Absences justifiées",
+          "Historique des modifications",
+        ]}
       />
     </AppShell>
   );

@@ -24,7 +24,11 @@ export function formatMoney(amount: number, currency: string) {
 }
 
 export function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
+  return new Date(d).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export function formatDateTime(d: string) {
@@ -60,7 +64,8 @@ export function computeDashboard(db: Database): DashboardStats {
   const enrolledChildren = db.children.filter((c) => c.status === "Inscrit");
   const att = db.attendance.filter((a) => a.date === today);
   const unpaid = db.invoices.filter(
-    (i) => i.status === "Non payée" || i.status === "Partiellement payée" || i.status === "En retard",
+    (i) =>
+      i.status === "Non payée" || i.status === "Partiellement payée" || i.status === "En retard",
   );
   const now = new Date();
   const in30 = new Date();

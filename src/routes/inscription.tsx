@@ -364,12 +364,7 @@ function FieldInput({
       <Label htmlFor={id} className="text-sm">
         {label}
       </Label>
-      <Input
-        id={id}
-        aria-invalid={!!error}
-        className="h-12 rounded-xl text-base"
-        {...props}
-      />
+      <Input id={id} aria-invalid={!!error} className="h-12 rounded-xl text-base" {...props} />
       {error && <InlineError>{error}</InlineError>}
     </div>
   );

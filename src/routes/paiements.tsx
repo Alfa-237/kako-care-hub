@@ -20,7 +20,14 @@ function Page() {
       <ModulePlaceholder
         title="Paiements"
         description="Encaissements et reste à payer."
-        planned={["Encaissement manuel", "Moyens de paiement", "Rapprochement facture", "Reste à payer", "Reçus", "Historique"]}
+        planned={[
+          "Encaissement manuel",
+          "Moyens de paiement",
+          "Rapprochement facture",
+          "Reste à payer",
+          "Reçus",
+          "Historique",
+        ]}
       />
     </AppShell>
   );

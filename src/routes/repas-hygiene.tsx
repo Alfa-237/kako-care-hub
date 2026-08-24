@@ -20,7 +20,14 @@ function Page() {
       <ModulePlaceholder
         title="Repas, changes et siestes"
         description="Suivi quotidien des soins."
-        planned={["Menus par jour", "Menus par section", "Allergies", "Changes", "Siestes et durées", "Historique"]}
+        planned={[
+          "Menus par jour",
+          "Menus par section",
+          "Allergies",
+          "Changes",
+          "Siestes et durées",
+          "Historique",
+        ]}
       />
     </AppShell>
   );

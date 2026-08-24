@@ -77,12 +77,42 @@ function Dashboard() {
 
   const quickActions = [
     { label: "Ajouter un enfant", icon: Plus, to: "/enfants", perm: "children.edit" as const },
-    { label: "Enregistrer une arrivée", icon: LogIn, to: "/presences", perm: "attendance.edit" as const },
-    { label: "Enregistrer un départ", icon: LogOut, to: "/presences", perm: "attendance.edit" as const },
-    { label: "Ajouter une absence", icon: CalendarX, to: "/presences", perm: "attendance.edit" as const },
-    { label: "Ajouter une transmission", icon: NotebookPen, to: "/transmissions", perm: "transmissions.edit" as const },
-    { label: "Créer une facture", icon: ReceiptText, to: "/facturation", perm: "billing.edit" as const },
-    { label: "Enregistrer un paiement", icon: Wallet, to: "/paiements", perm: "payments.manage" as const },
+    {
+      label: "Enregistrer une arrivée",
+      icon: LogIn,
+      to: "/presences",
+      perm: "attendance.edit" as const,
+    },
+    {
+      label: "Enregistrer un départ",
+      icon: LogOut,
+      to: "/presences",
+      perm: "attendance.edit" as const,
+    },
+    {
+      label: "Ajouter une absence",
+      icon: CalendarX,
+      to: "/presences",
+      perm: "attendance.edit" as const,
+    },
+    {
+      label: "Ajouter une transmission",
+      icon: NotebookPen,
+      to: "/transmissions",
+      perm: "transmissions.edit" as const,
+    },
+    {
+      label: "Créer une facture",
+      icon: ReceiptText,
+      to: "/facturation",
+      perm: "billing.edit" as const,
+    },
+    {
+      label: "Enregistrer un paiement",
+      icon: Wallet,
+      to: "/paiements",
+      perm: "payments.manage" as const,
+    },
   ].filter((a) => can(a.perm));
 
   async function handleBackup() {
@@ -115,10 +145,34 @@ function Dashboard() {
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Enfants inscrits" value={s.enrolled} icon={Baby} tone="primary" hint={`Capacité : ${db.establishment.capacity} places`} />
-        <StatCard label="Présents aujourd'hui" value={s.present} icon={CheckCircle2} tone="success" hint={`${s.departed} déjà partis`} />
-        <StatCard label="Absents" value={s.absent} icon={XCircle} tone="danger" hint={`${s.expected} encore attendus`} />
-        <StatCard label="Retards" value={s.late} icon={Clock} tone="warning" hint="Arrivées après l'horaire prévu" />
+        <StatCard
+          label="Enfants inscrits"
+          value={s.enrolled}
+          icon={Baby}
+          tone="primary"
+          hint={`Capacité : ${db.establishment.capacity} places`}
+        />
+        <StatCard
+          label="Présents aujourd'hui"
+          value={s.present}
+          icon={CheckCircle2}
+          tone="success"
+          hint={`${s.departed} déjà partis`}
+        />
+        <StatCard
+          label="Absents"
+          value={s.absent}
+          icon={XCircle}
+          tone="danger"
+          hint={`${s.expected} encore attendus`}
+        />
+        <StatCard
+          label="Retards"
+          value={s.late}
+          icon={Clock}
+          tone="warning"
+          hint="Arrivées après l'horaire prévu"
+        />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
@@ -228,8 +282,20 @@ function Dashboard() {
               tone="danger"
               hint={formatMoney(s.unpaidAmount, currency)}
             />
-            <StatCard label="Documents manquants" value={s.missingDocuments} icon={FileWarning} tone="warning" hint="Dossiers incomplets" />
-            <StatCard label="Alertes médicales" value={s.medicalAlerts} icon={HeartPulse} tone="danger" hint="Allergies et traitements" />
+            <StatCard
+              label="Documents manquants"
+              value={s.missingDocuments}
+              icon={FileWarning}
+              tone="warning"
+              hint="Dossiers incomplets"
+            />
+            <StatCard
+              label="Alertes médicales"
+              value={s.medicalAlerts}
+              icon={HeartPulse}
+              tone="danger"
+              hint="Allergies et traitements"
+            />
             <StatCard
               label="Personnel présent"
               value={`${s.staffPresent}/${s.staffTotal}`}
@@ -252,7 +318,11 @@ function Dashboard() {
                 </Button>
               ))}
               {can("backup.manage") && (
-                <Button variant="outline" className="justify-start" onClick={() => void handleBackup()}>
+                <Button
+                  variant="outline"
+                  className="justify-start"
+                  onClick={() => void handleBackup()}
+                >
                   <DatabaseBackup className="mr-2 size-4 text-primary" /> Faire une sauvegarde
                 </Button>
               )}
@@ -315,7 +385,10 @@ function Dashboard() {
           <Panel title="Activité récente" icon={ActivityIcon} bodyClassName="p-0">
             <ul className="divide-y">
               {db.auditLogs.slice(0, 5).map((log) => (
-                <li key={log.id} className="px-4 py-2.5 text-sm transition-colors hover:bg-muted/40">
+                <li
+                  key={log.id}
+                  className="px-4 py-2.5 text-sm transition-colors hover:bg-muted/40"
+                >
                   <p className="truncate font-medium">{log.action}</p>
                   <p className="truncate text-xs text-muted-foreground">
                     {log.userName} · {formatDateTime(log.at)}

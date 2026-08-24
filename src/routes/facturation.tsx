@@ -20,7 +20,14 @@ function Page() {
       <ModulePlaceholder
         title="Facturation"
         description="Tarifs, factures et impayés."
-        planned={["Grille tarifaire", "Génération de factures", "Lignes de facture", "Réductions fratrie", "Suivi des impayés", "Export PDF"]}
+        planned={[
+          "Grille tarifaire",
+          "Génération de factures",
+          "Lignes de facture",
+          "Réductions fratrie",
+          "Suivi des impayés",
+          "Export PDF",
+        ]}
       />
     </AppShell>
   );

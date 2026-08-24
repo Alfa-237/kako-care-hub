@@ -20,7 +20,14 @@ function Page() {
       <ModulePlaceholder
         title="Paramètres"
         description="Établissement, sections, utilisateurs et sécurité."
-        planned={["Informations de l'établissement", "Sections et capacités", "Utilisateurs et rôles", "Permissions", "Verrouillage automatique", "Journal des actions"]}
+        planned={[
+          "Informations de l'établissement",
+          "Sections et capacités",
+          "Utilisateurs et rôles",
+          "Permissions",
+          "Verrouillage automatique",
+          "Journal des actions",
+        ]}
       />
     </AppShell>
   );

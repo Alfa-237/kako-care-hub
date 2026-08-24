@@ -14,7 +14,6 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "../lib/auth/auth-context";
 import { Toaster } from "../components/ui/sonner";
 
-
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -90,7 +89,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "KAKO Manager — Logiciel de gestion de crèche" },
       {
         property: "og:description",
-        content: "Gérez enfants, familles, présences, transmissions et facturation en un seul outil.",
+        content:
+          "Gérez enfants, familles, présences, transmissions et facturation en un seul outil.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -143,4 +143,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-

@@ -20,7 +20,14 @@ function Page() {
       <ModulePlaceholder
         title="Rapports"
         description="Statistiques et exports."
-        planned={["Taux d'occupation", "Présences et absences", "Chiffre d'affaires", "Impayés", "Activités et incidents", "Export CSV / PDF"]}
+        planned={[
+          "Taux d'occupation",
+          "Présences et absences",
+          "Chiffre d'affaires",
+          "Impayés",
+          "Activités et incidents",
+          "Export CSV / PDF",
+        ]}
       />
     </AppShell>
   );
