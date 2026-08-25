@@ -30,6 +30,8 @@ import { Route as TransmissionsRouteImport } from './routes/transmissions'
 import { Route as EnfantsIdRouteImport } from './routes/enfants.$id'
 import { Route as FamillesIndexRouteImport } from './routes/familles.index'
 import { Route as FamillesIdRouteImport } from './routes/familles.$id'
+import { Route as TransmissionsIndexRouteImport } from './routes/transmissions.index'
+import { Route as TransmissionsChildIdRouteImport } from './routes/transmissions.$childId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -136,6 +138,16 @@ const FamillesIdRoute = FamillesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => FamillesRoute,
 } as any)
+const TransmissionsIndexRoute = TransmissionsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TransmissionsRoute,
+} as any)
+const TransmissionsChildIdRoute = TransmissionsChildIdRouteImport.update({
+  id: '/$childId',
+  path: '/$childId',
+  getParentRoute: () => TransmissionsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -155,10 +167,12 @@ export interface FileRoutesByFullPath {
   '/rapports': typeof RapportsRoute
   '/repas-hygiene': typeof RepasHygieneRoute
   '/sauvegarde': typeof SauvegardeRoute
-  '/transmissions': typeof TransmissionsRoute
+  '/transmissions': typeof TransmissionsRouteWithChildren
   '/enfants/$id': typeof EnfantsIdRoute
   '/familles/$id': typeof FamillesIdRoute
+  '/transmissions/$childId': typeof TransmissionsChildIdRoute
   '/familles/': typeof FamillesIndexRoute
+  '/transmissions/': typeof TransmissionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -177,10 +191,11 @@ export interface FileRoutesByTo {
   '/rapports': typeof RapportsRoute
   '/repas-hygiene': typeof RepasHygieneRoute
   '/sauvegarde': typeof SauvegardeRoute
-  '/transmissions': typeof TransmissionsRoute
   '/enfants/$id': typeof EnfantsIdRoute
   '/familles/$id': typeof FamillesIdRoute
+  '/transmissions/$childId': typeof TransmissionsChildIdRoute
   '/familles': typeof FamillesIndexRoute
+  '/transmissions': typeof TransmissionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -201,10 +216,12 @@ export interface FileRoutesById {
   '/rapports': typeof RapportsRoute
   '/repas-hygiene': typeof RepasHygieneRoute
   '/sauvegarde': typeof SauvegardeRoute
-  '/transmissions': typeof TransmissionsRoute
+  '/transmissions': typeof TransmissionsRouteWithChildren
   '/enfants/$id': typeof EnfantsIdRoute
   '/familles/$id': typeof FamillesIdRoute
+  '/transmissions/$childId': typeof TransmissionsChildIdRoute
   '/familles/': typeof FamillesIndexRoute
+  '/transmissions/': typeof TransmissionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -229,7 +246,9 @@ export interface FileRouteTypes {
     | '/transmissions'
     | '/enfants/$id'
     | '/familles/$id'
+    | '/transmissions/$childId'
     | '/familles/'
+    | '/transmissions/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -248,10 +267,11 @@ export interface FileRouteTypes {
     | '/rapports'
     | '/repas-hygiene'
     | '/sauvegarde'
-    | '/transmissions'
     | '/enfants/$id'
     | '/familles/$id'
+    | '/transmissions/$childId'
     | '/familles'
+    | '/transmissions'
   id:
     | '__root__'
     | '/'
@@ -274,7 +294,9 @@ export interface FileRouteTypes {
     | '/transmissions'
     | '/enfants/$id'
     | '/familles/$id'
+    | '/transmissions/$childId'
     | '/familles/'
+    | '/transmissions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -295,7 +317,7 @@ export interface RootRouteChildren {
   RapportsRoute: typeof RapportsRoute
   RepasHygieneRoute: typeof RepasHygieneRoute
   SauvegardeRoute: typeof SauvegardeRoute
-  TransmissionsRoute: typeof TransmissionsRoute
+  TransmissionsRoute: typeof TransmissionsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -447,6 +469,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FamillesIdRouteImport
       parentRoute: typeof FamillesRoute
     }
+    '/transmissions/': {
+      id: '/transmissions/'
+      path: '/'
+      fullPath: '/transmissions/'
+      preLoaderRoute: typeof TransmissionsIndexRouteImport
+      parentRoute: typeof TransmissionsRoute
+    }
+    '/transmissions/$childId': {
+      id: '/transmissions/$childId'
+      path: '/$childId'
+      fullPath: '/transmissions/$childId'
+      preLoaderRoute: typeof TransmissionsChildIdRouteImport
+      parentRoute: typeof TransmissionsRoute
+    }
   }
 }
 
@@ -475,6 +511,20 @@ const FamillesRouteWithChildren = FamillesRoute._addFileChildren(
   FamillesRouteChildren,
 )
 
+interface TransmissionsRouteChildren {
+  TransmissionsChildIdRoute: typeof TransmissionsChildIdRoute
+  TransmissionsIndexRoute: typeof TransmissionsIndexRoute
+}
+
+const TransmissionsRouteChildren: TransmissionsRouteChildren = {
+  TransmissionsChildIdRoute: TransmissionsChildIdRoute,
+  TransmissionsIndexRoute: TransmissionsIndexRoute,
+}
+
+const TransmissionsRouteWithChildren = TransmissionsRoute._addFileChildren(
+  TransmissionsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivitesRoute: ActivitesRoute,
@@ -493,7 +543,7 @@ const rootRouteChildren: RootRouteChildren = {
   RapportsRoute: RapportsRoute,
   RepasHygieneRoute: RepasHygieneRoute,
   SauvegardeRoute: SauvegardeRoute,
-  TransmissionsRoute: TransmissionsRoute,
+  TransmissionsRoute: TransmissionsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

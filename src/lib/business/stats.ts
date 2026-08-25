@@ -1,6 +1,8 @@
-import type { Database, Child, Attendance } from "../data/types";
+import type { Database, Child } from "../data/types";
+import type { AttendanceRecord } from "../models/attendance";
+import { localDateISO } from "../models/attendance";
 
-export const todayISO = () => new Date().toISOString().slice(0, 10);
+export const todayISO = () => localDateISO();
 
 export function fullName(c: { firstName: string; lastName: string }) {
   return `${c.firstName} ${c.lastName}`;
@@ -56,7 +58,7 @@ export interface DashboardStats {
   occupancy: number;
   birthdays: Child[];
   expiringContracts: Child[];
-  todayAttendance: Attendance[];
+  todayAttendance: AttendanceRecord[];
 }
 
 export function computeDashboard(db: Database): DashboardStats {
@@ -85,11 +87,11 @@ export function computeDashboard(db: Database): DashboardStats {
 
   return {
     enrolled: enrolledChildren.length,
-    present: att.filter((a) => a.state === "present").length,
-    absent: att.filter((a) => a.state === "absent").length,
-    expected: att.filter((a) => a.state === "attendu").length,
-    late: att.filter((a) => a.late).length,
-    departed: att.filter((a) => a.state === "parti").length,
+    present: att.filter((a) => a.status === "present").length,
+    absent: att.filter((a) => a.status === "absent").length,
+    expected: att.filter((a) => a.status === "attendu").length,
+    late: att.filter((a) => a.status === "retard").length,
+    departed: att.filter((a) => a.status === "depart-anticipe").length,
     unpaidInvoices: unpaid.length,
     unpaidAmount: unpaid.reduce((s, i) => s + (i.total - i.discount - i.paidAmount), 0),
     missingDocuments: db.children.filter((c) => c.missingDocuments.length > 0).length,

@@ -229,21 +229,25 @@ function Dashboard() {
                 const child = db.children.find((c) => c.id === a.childId);
                 if (!child) return null;
                 const tone =
-                  a.state === "present"
+                  a.status === "present"
                     ? "success"
-                    : a.state === "absent"
+                    : a.status === "absent"
                       ? "danger"
-                      : a.state === "parti"
-                        ? "info"
-                        : "warning";
+                      : a.status === "retard"
+                        ? "warning"
+                        : a.status === "depart-anticipe"
+                          ? "info"
+                          : "primary";
                 const label =
-                  a.state === "present"
+                  a.status === "present"
                     ? "Présent"
-                    : a.state === "absent"
+                    : a.status === "absent"
                       ? "Absent"
-                      : a.state === "parti"
-                        ? "Parti"
-                        : "Attendu";
+                      : a.status === "retard"
+                        ? "Retard"
+                        : a.status === "depart-anticipe"
+                          ? "Départ anticipé"
+                          : "Attendu";
                 return (
                   <li
                     key={a.id}

@@ -26,6 +26,7 @@ export async function emptyData(): Promise<Database> {
     parents: [],
     childParents: [],
     attendance: [],
+    dailyTransmissions: [],
     employees: [],
     invoices: [],
     payments: [],

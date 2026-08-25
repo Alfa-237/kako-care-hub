@@ -3,11 +3,21 @@
 // que la couche historique (db.ts) et déclenchent sa notification, afin que
 // les composants legacy (useDatabase) restent réactifs.
 import { initDatabase, mutate, onDatabaseChanged } from "../data/db";
-import type { ChildParent, CollectionKey, Database } from "../data/types";
+import type { Child, ChildParent, CollectionKey, Database, Parent } from "../data/types";
 import { getFamilyViewById, listFamilies } from "../business/families";
 import type { FamilyRecord } from "../models/family";
-import type { Child, Parent } from "../data/types";
-import type { IDataService } from "./data-service";
+import type { AttendanceRecord } from "../models/attendance";
+import { localDateISO } from "../models/attendance";
+import type { IDataService, AttendanceSummary, TransmissionSectionKey } from "./data-service";
+import type {
+  ActivityRecord,
+  DailyTransmission,
+  DiaperChangeRecord,
+  IncidentRecord,
+  MealRecord,
+  MedicationRecord,
+  NapRecord,
+} from "../models/daily-transmission";
 
 /** Préfixes d'identifiants par collection pour la numérotation auto-incrémentée. */
 export const ID_PREFIXES: Partial<Record<CollectionKey, string>> = {
@@ -17,6 +27,8 @@ export const ID_PREFIXES: Partial<Record<CollectionKey, string>> = {
   sections: "sec",
   employees: "emp",
   activities: "act",
+  attendance: "att",
+  dailyTransmissions: "tr",
 };
 
 function collectionOf(db: Database, key: CollectionKey): Array<{ id: string }> {
@@ -167,6 +179,314 @@ class LocalStorageDataService implements IDataService {
   async getFamilyView(familyId: string) {
     const db = await initDatabase();
     return getFamilyViewById(db, familyId);
+  }
+
+  // ---- Présences / pointage quotidien (phase 3B)
+
+  private familyIdForChild(db: Database, childId: string): string | null {
+    const link = (db.childParents ?? []).find((cp: ChildParent) => cp.childId === childId);
+    if (!link) return null;
+    const record = (db.families ?? []).find(
+      (f: FamilyRecord) => f.primaryParentId === link.parentId,
+    );
+    return record?.id ?? null;
+  }
+
+  async getAttendanceByDate(date: string): Promise<AttendanceRecord[]> {
+    const db = await initDatabase();
+    return structuredClone((db.attendance ?? []).filter((a) => a.date === date));
+  }
+
+  async getAttendanceByChild(childId: string): Promise<AttendanceRecord[]> {
+    const db = await initDatabase();
+    return structuredClone(
+      (db.attendance ?? [])
+        .filter((a) => a.childId === childId)
+        .sort((a, b) => b.date.localeCompare(a.date)),
+    );
+  }
+
+  async getAttendanceByFamily(familyId: string): Promise<AttendanceRecord[]> {
+    const db = await initDatabase();
+    const linked = new Set(
+      (db.childParents ?? [])
+        .filter((cp: ChildParent) => {
+          const fam = (db.families ?? []).find(
+            (f: FamilyRecord) => f.primaryParentId === cp.parentId,
+          );
+          return fam?.id === familyId;
+        })
+        .map((cp: ChildParent) => cp.childId),
+    );
+    return structuredClone(
+      (db.attendance ?? [])
+        .filter((a) => a.familyId === familyId || linked.has(a.childId))
+        .sort((a, b) => b.date.localeCompare(a.date)),
+    );
+  }
+
+  async upsertAttendance(
+    input: { childId: string; date: string } & Partial<AttendanceRecord>,
+  ): Promise<AttendanceRecord> {
+    let result: AttendanceRecord | null = null;
+    await mutate((d) => {
+      d.attendance = d.attendance ?? [];
+      const idx = d.attendance.findIndex(
+        (a) => a.childId === input.childId && a.date === input.date,
+      );
+      if (idx >= 0) {
+        d.attendance[idx] = {
+          ...d.attendance[idx]!,
+          ...input,
+          updatedAt: new Date().toISOString(),
+        };
+        result = structuredClone(d.attendance[idx]);
+      } else {
+        const now = new Date().toISOString();
+        const created: AttendanceRecord = {
+          id: this.nextId("attendance", "att"),
+          childId: input.childId,
+          familyId: input.familyId ?? this.familyIdForChild(d, input.childId),
+          date: input.date,
+          status: input.status ?? "attendu",
+          arrivalTime: input.arrivalTime ?? null,
+          arrivalAccompaniedBy: input.arrivalAccompaniedBy ?? null,
+          departureTime: input.departureTime ?? null,
+          departurePickedUpBy: input.departurePickedUpBy ?? null,
+          absenceReason: input.absenceReason ?? null,
+          absenceType: input.absenceType ?? null,
+          notes: input.notes ?? "",
+          recordedBy: input.recordedBy ?? null,
+          createdAt: now,
+          updatedAt: now,
+          isDemo: false,
+        };
+        d.attendance.push(created);
+        result = structuredClone(created);
+      }
+    });
+    if (!result) throw new Error("Échec de l'enregistrement du pointage.");
+    return result;
+  }
+
+  // ---- Transmissions quotidiennes / cahier de liaison (phase 3C)
+
+  async getDailyTransmission(childId: string, date: string): Promise<DailyTransmission | null> {
+    const db = await initDatabase();
+    const found = (db.dailyTransmissions ?? []).find(
+      (t) => t.childId === childId && t.date === date,
+    );
+    return found ? structuredClone(found) : null;
+  }
+
+  async getDailyTransmissionsByChild(childId: string): Promise<DailyTransmission[]> {
+    const db = await initDatabase();
+    return structuredClone(
+      (db.dailyTransmissions ?? [])
+        .filter((t) => t.childId === childId)
+        .sort((a, b) => b.date.localeCompare(a.date)),
+    );
+  }
+
+  async getDailyTransmissionsByDate(date: string): Promise<DailyTransmission[]> {
+    const db = await initDatabase();
+    return structuredClone((db.dailyTransmissions ?? []).filter((t) => t.date === date));
+  }
+
+  async upsertDailyTransmission(
+    input: { childId: string; date: string } & Partial<DailyTransmission>,
+  ): Promise<DailyTransmission> {
+    let result: DailyTransmission | null = null;
+    await mutate((d) => {
+      d.dailyTransmissions = d.dailyTransmissions ?? [];
+      const idx = d.dailyTransmissions.findIndex(
+        (t) => t.childId === input.childId && t.date === input.date,
+      );
+      if (idx >= 0) {
+        d.dailyTransmissions[idx] = {
+          ...d.dailyTransmissions[idx]!,
+          ...input,
+          childId: input.childId,
+          date: input.date,
+          updatedAt: new Date().toISOString(),
+        };
+        result = structuredClone(d.dailyTransmissions[idx]);
+      } else {
+        const now = new Date().toISOString();
+        const created: DailyTransmission = {
+          id: this.nextId("dailyTransmissions", "tr"),
+          childId: input.childId,
+          familyId: input.familyId ?? this.familyIdForChild(d, input.childId),
+          date: input.date,
+          generalNotes: input.generalNotes ?? "",
+          meals: input.meals ?? [],
+          naps: input.naps ?? [],
+          diaperChanges: input.diaperChanges ?? [],
+          activities: input.activities ?? [],
+          incidents: input.incidents ?? [],
+          medications: input.medications ?? [],
+          recordedBy: input.recordedBy ?? null,
+          createdAt: now,
+          updatedAt: now,
+          isDemo: false,
+        };
+        if (input.mood !== undefined) created.mood = input.mood;
+        if (input.temperature !== undefined) created.temperature = input.temperature;
+        d.dailyTransmissions.push(created);
+        result = structuredClone(created);
+      }
+    });
+    if (!result) throw new Error("Échec de l'enregistrement de la transmission.");
+    return result;
+  }
+
+  /**
+   * Modifie la liste `key` d'une transmission via une fonction pure
+   * (base commune des ajouts/éditions/suppressions de sous-événements).
+   */
+  private async mutateSection(
+    transmissionId: string,
+    key: TransmissionSectionKey,
+    transform: (items: Array<{ id: string }>) => Array<{ id: string }>,
+  ): Promise<DailyTransmission> {
+    let result: DailyTransmission | null = null;
+    await mutate((d) => {
+      const list = d.dailyTransmissions ?? [];
+      const idx = list.findIndex((t) => t.id === transmissionId);
+      if (idx < 0) return;
+      const section = list[idx]![key] as unknown as Array<{ id: string }>;
+      list[idx] = {
+        ...list[idx]!,
+        [key]: transform([...section]),
+        updatedAt: new Date().toISOString(),
+      };
+      result = structuredClone(list[idx]!);
+    });
+    if (!result) throw new Error(`Transmission « ${transmissionId} » introuvable.`);
+    return result;
+  }
+
+  async upsertTransmissionItem(
+    transmissionId: string,
+    key: TransmissionSectionKey,
+    item: { id: string },
+  ): Promise<DailyTransmission> {
+    return this.mutateSection(transmissionId, key, (items) => {
+      const idx = items.findIndex((x) => x.id === item.id);
+      if (idx >= 0) items[idx] = item;
+      else items.push(item);
+      return items;
+    });
+  }
+
+  async removeTransmissionItem(
+    transmissionId: string,
+    key: TransmissionSectionKey,
+    itemId: string,
+  ): Promise<DailyTransmission> {
+    return this.mutateSection(transmissionId, key, (items) => items.filter((x) => x.id !== itemId));
+  }
+
+  async addMealToTransmission(
+    transmissionId: string,
+    meal: MealRecord,
+  ): Promise<DailyTransmission> {
+    const updated = await this.upsertTransmissionItem(transmissionId, "meals", meal);
+    return this.sortSection(updated, "meals");
+  }
+
+  async addNapToTransmission(transmissionId: string, nap: NapRecord): Promise<DailyTransmission> {
+    const updated = await this.upsertTransmissionItem(transmissionId, "naps", nap);
+    return this.sortSection(updated, "naps", (a, b) =>
+      (a as NapRecord).startTime.localeCompare((b as NapRecord).startTime),
+    );
+  }
+
+  async addDiaperChangeToTransmission(
+    transmissionId: string,
+    change: DiaperChangeRecord,
+  ): Promise<DailyTransmission> {
+    const updated = await this.upsertTransmissionItem(transmissionId, "diaperChanges", change);
+    return this.sortSection(updated, "diaperChanges");
+  }
+
+  async addActivityToTransmission(
+    transmissionId: string,
+    activity: ActivityRecord,
+  ): Promise<DailyTransmission> {
+    // Ordre d'insertion conservé pour les activités.
+    return this.upsertTransmissionItem(transmissionId, "activities", activity);
+  }
+
+  async addIncidentToTransmission(
+    transmissionId: string,
+    incident: IncidentRecord,
+  ): Promise<DailyTransmission> {
+    const updated = await this.upsertTransmissionItem(transmissionId, "incidents", incident);
+    return this.sortSection(updated, "incidents");
+  }
+
+  async addMedicationToTransmission(
+    transmissionId: string,
+    medication: MedicationRecord,
+  ): Promise<DailyTransmission> {
+    const updated = await this.upsertTransmissionItem(transmissionId, "medications", medication);
+    return this.sortSection(updated, "medications");
+  }
+
+  /** Re-tri chronologique d'une section après ajout/édition (retourne un clone). */
+  private sortSection(
+    transmission: DailyTransmission,
+    key: TransmissionSectionKey,
+    compare?: (a: { id: string }, b: { id: string }) => number,
+  ): DailyTransmission {
+    const clone = structuredClone(transmission);
+    const section = clone[key] as unknown as Array<{
+      id: string;
+      time?: string;
+      startTime?: string;
+    }>;
+    section.sort((a, b) => {
+      if (compare) return compare(a, b);
+      const ta = a.time ?? a.startTime ?? "";
+      const tb = b.time ?? b.startTime ?? "";
+      return ta.localeCompare(tb);
+    });
+    clone[key] = section as never;
+    return clone;
+  }
+
+  async getTodayAttendanceSummary(date?: string): Promise<AttendanceSummary> {
+    const day = date ?? localDateISO();
+    const db = await initDatabase();
+    const enrolled = (db.children ?? []).filter((c) => c.status === "Inscrit");
+    const byChild = new Map(
+      (db.attendance ?? []).filter((a) => a.date === day).map((a) => [a.childId, a]),
+    );
+    let totalPresent = 0;
+    let totalAbsent = 0;
+    let totalRetard = 0;
+    let totalDepartAnticipe = 0;
+    for (const child of enrolled) {
+      const rec = byChild.get(child.id);
+      if (!rec) continue;
+      if (rec.status === "present") totalPresent += 1;
+      else if (rec.status === "absent") totalAbsent += 1;
+      else if (rec.status === "retard") totalRetard += 1;
+      else if (rec.status === "depart-anticipe") totalDepartAnticipe += 1;
+    }
+    const totalAttendu = enrolled.length;
+    return {
+      totalAttendu,
+      totalPresent,
+      totalAbsent,
+      totalRetard,
+      totalDepartAnticipe,
+      tauxOccupation:
+        totalAttendu > 0
+          ? Math.round(((totalPresent + totalDepartAnticipe) / totalAttendu) * 100)
+          : 0,
+    };
   }
 }
 

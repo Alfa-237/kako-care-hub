@@ -2,6 +2,7 @@ import { useCallback, useSyncExternalStore } from "react";
 import { DB_KEY, storage } from "./storage";
 import { buildSeedDatabase } from "./seed";
 import type { Database } from "./types";
+import type { AttendanceRecord } from "../models/attendance";
 import { deriveFamiliesFromDatabase } from "../business/families";
 
 type Listener = () => void;
@@ -34,6 +35,18 @@ export async function initDatabase(): Promise<Database> {
       next = { ...next, families: deriveFamiliesFromDatabase(next) };
       await storage.write(DB_KEY, next);
     }
+    // Migration 3B : convertit les anciens pointages (state attendu/present/parti/absent)
+    // vers le nouveau modèle AttendanceRecord.
+    const migratedAttendance = migrateAttendance(next.attendance);
+    if (migratedAttendance !== next.attendance) {
+      next = { ...next, attendance: migratedAttendance };
+      await storage.write(DB_KEY, next);
+    }
+    // Migration 3C : ajoute la collection du cahier de liaison quotidien.
+    if (!Array.isArray(next.dailyTransmissions)) {
+      next = { ...next, dailyTransmissions: [] };
+      await storage.write(DB_KEY, next);
+    }
     db = next;
     emit();
     return next;
@@ -43,6 +56,52 @@ export async function initDatabase(): Promise<Database> {
 
 export function getDatabase(): Database | null {
   return db;
+}
+
+/**
+ * Conversion des pointages hérités vers AttendanceRecord.
+ * Retourne la même référence si aucune conversion n'est nécessaire.
+ */
+function migrateAttendance(raw: unknown): AttendanceRecord[] {
+  if (!Array.isArray(raw)) return [];
+  const needsMigration = raw.some(
+    (item) => typeof item === "object" && item !== null && "state" in item && !("status" in item),
+  );
+  if (!needsMigration) return raw as AttendanceRecord[];
+  return (raw as Array<Record<string, unknown>>).map((old) => {
+    const state = String(old["state"] ?? "attendu");
+    const late = old["late"] === true;
+    const early = old["earlyLeave"] === true;
+    const status: AttendanceRecord["status"] = late
+      ? "retard"
+      : early || state === "parti"
+        ? "depart-anticipe"
+        : state === "absent"
+          ? "absent"
+          : "present";
+    const dateStr = String(old["date"] ?? "");
+    const stamp = dateStr
+      ? new Date(`${dateStr}T12:00:00`).toISOString()
+      : new Date().toISOString();
+    return {
+      id: String(old["id"]),
+      childId: String(old["childId"]),
+      familyId: null,
+      date: dateStr,
+      status,
+      arrivalTime: (old["arrivalTime"] as string | null) ?? null,
+      arrivalAccompaniedBy: (old["broughtBy"] as string | null) ?? null,
+      departureTime: (old["departureTime"] as string | null) ?? null,
+      departurePickedUpBy: (old["pickedUpBy"] as string | null) ?? null,
+      absenceReason: (old["absenceReason"] as string | null) ?? null,
+      absenceType: status === "absent" ? ("autre" as const) : null,
+      notes: "",
+      recordedBy: (old["recordedBy"] as string | null) ?? null,
+      createdAt: stamp,
+      updatedAt: stamp,
+      isDemo: old["isDemo"] !== false,
+    } satisfies AttendanceRecord;
+  });
 }
 
 export async function mutate(fn: (draft: Database) => void): Promise<Database> {
@@ -72,6 +131,7 @@ export async function clearDemoData(): Promise<void> {
     d.parents = d.parents.filter((x) => !x.isDemo);
     d.childParents = d.childParents.filter((x) => !x.isDemo);
     d.attendance = d.attendance.filter((x) => !x.isDemo);
+    d.dailyTransmissions = d.dailyTransmissions.filter((x) => !x.isDemo);
     d.invoices = d.invoices.filter((x) => !x.isDemo);
     d.payments = d.payments.filter((x) => !x.isDemo);
     d.activities = d.activities.filter((x) => !x.isDemo);

@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   Droplets,
   ExternalLink,
   FileWarning,
@@ -18,6 +19,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDatabase } from "@/lib/data/db";
 import { ageLabel, formatDate, formatMoney, fullName } from "@/lib/business/stats";
 import type { Child } from "@/lib/data/types";
+import { ABSENCE_TYPE_LABELS } from "@/lib/models/attendance";
+import { MOOD_EMOJI } from "@/lib/models/daily-transmission";
+import { useAttendanceByChild } from "@/hooks/use-attendance";
+import { useDailyTransmissionsByChild } from "@/hooks/use-daily-transmissions";
+import { AttendanceStatusBadge } from "@/components/attendance/attendance-status-badge";
 
 function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
   return (
@@ -52,22 +58,6 @@ function DetailEmpty({
 
 const GENDER_LABEL: Record<"F" | "M", string> = { F: "Fille", M: "Garçon" };
 
-function attendanceInfo(state: string): {
-  label: string;
-  tone: "success" | "danger" | "info" | "warning";
-} {
-  switch (state) {
-    case "present":
-      return { label: "Présent", tone: "success" };
-    case "absent":
-      return { label: "Absent", tone: "danger" };
-    case "parti":
-      return { label: "Parti", tone: "info" };
-    default:
-      return { label: "Attendu", tone: "warning" };
-  }
-}
-
 function invoiceTone(status: string): "success" | "warning" | "danger" | "info" | "neutral" {
   switch (status) {
     case "Payée":
@@ -90,7 +80,6 @@ const FUTURE_TABS: Array<{ value: string; label: string; module: string }> = [
   { value: "changes", label: "Changes", module: "Repas & Hygiène" },
   { value: "incidents", label: "Incidents", module: "Incidents" },
   { value: "medicaments", label: "Médicaments", module: "Médicaments" },
-  { value: "transmissions", label: "Transmissions", module: "Transmissions" },
 ];
 
 const FUTURE_ICONS: Record<string, LucideIcon> = {
@@ -99,11 +88,13 @@ const FUTURE_ICONS: Record<string, LucideIcon> = {
   changes: Droplets,
   incidents: Siren,
   medicaments: Pill,
-  transmissions: NotebookPen,
 };
 
 export function ChildDetail({ child }: { child: Child }) {
   const db = useDatabase();
+  // Hooks appelés inconditionnellement (règle des hooks) — avant tout retour anticipé.
+  const { data: attendances } = useAttendanceByChild(child.id);
+  const { data: transmissions } = useDailyTransmissionsByChild(child.id);
   if (!db) return null;
 
   const section = db.sections.find((s) => s.id === child.sectionId);
@@ -114,10 +105,7 @@ export function ChildDetail({ child }: { child: Child }) {
     .map((link) => ({ link, parent: db.parents.find((p) => p.id === link.parentId) }))
     .filter((x) => x.parent);
 
-  const attendances = db.attendance
-    .filter((a) => a.childId === child.id)
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 30);
+  const history = (attendances ?? []).slice(0, 30);
 
   const activities = db.activities
     .filter((a) => a.childIds.includes(child.id))
@@ -134,6 +122,7 @@ export function ChildDetail({ child }: { child: Child }) {
         <TabsTrigger value="famille">Famille</TabsTrigger>
         <TabsTrigger value="sante">Santé</TabsTrigger>
         <TabsTrigger value="presences">Présences</TabsTrigger>
+        <TabsTrigger value="transmissions">Transmissions</TabsTrigger>
         <TabsTrigger value="activites">Activités</TabsTrigger>
         <TabsTrigger value="facturation">Facturation</TabsTrigger>
         {FUTURE_TABS.map((t) => (
@@ -254,34 +243,88 @@ export function ChildDetail({ child }: { child: Child }) {
       </TabsContent>
 
       <TabsContent value="presences">
-        {attendances.length === 0 ? (
+        {history.length === 0 ? (
           <DetailEmpty
             icon={HeartPulse}
             title="Aucune présence enregistrée"
-            text="Les pointages quotidiens de cet enfant apparaîtront ici une fois le module Présences actif."
+            text="Les pointages quotidiens de cet enfant apparaîtront ici dès la première journée de pointage."
           />
         ) : (
           <ul className="divide-y overflow-hidden rounded-xl border bg-card shadow-card">
-            {attendances.map((a) => {
-              const info = attendanceInfo(a.state);
+            {history.map((a) => {
               return (
                 <li key={a.id} className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
                   <div className="min-w-0 flex-1">
                     <p className="text-[13.5px] font-semibold">{formatDate(a.date)}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {a.arrivalTime ? `Arrivée ${a.arrivalTime}` : "Pas d'arrivée"}
+                      {a.arrivalAccompaniedBy ? ` (${a.arrivalAccompaniedBy})` : ""}
                       {a.departureTime ? ` · Départ ${a.departureTime}` : ""}
-                      {a.late ? " · En retard" : ""}
-                      {a.earlyLeave ? " · Départ anticipé" : ""}
+                      {a.departureTime && a.departurePickedUpBy
+                        ? ` par ${a.departurePickedUpBy}`
+                        : ""}
                     </p>
-                    {a.absenceReason ? (
-                      <p className="mt-0.5 text-xs text-destructive">Raison : {a.absenceReason}</p>
+                    {a.status === "absent" ? (
+                      <p className="mt-0.5 text-xs text-destructive">
+                        {a.absenceType ? ABSENCE_TYPE_LABELS[a.absenceType] : "Absent"}
+                        {a.absenceReason ? ` · ${a.absenceReason}` : ""}
+                      </p>
                     ) : null}
                   </div>
-                  <StatusPill tone={info.tone}>{info.label}</StatusPill>
+                  <AttendanceStatusBadge status={a.status} />
                 </li>
               );
             })}
+          </ul>
+        )}
+      </TabsContent>
+
+      <TabsContent value="transmissions">
+        {(transmissions ?? []).length === 0 ? (
+          <DetailEmpty
+            icon={BookOpen}
+            title="Aucune transmission"
+            text="Le cahier de liaison quotidien de cet enfant se remplit depuis le module Transmissions."
+          />
+        ) : (
+          <ul className="divide-y overflow-hidden rounded-xl border bg-card shadow-card">
+            {(transmissions ?? []).map((t) => (
+              <li key={t.id} className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-2 text-[13.5px] font-semibold">
+                    {formatDate(t.date)}
+                    {t.mood ? (
+                      <span title={`Humeur : ${t.mood}`} aria-label={`Humeur ${t.mood}`}>
+                        <span aria-hidden="true">{MOOD_EMOJI[t.mood]}</span>
+                      </span>
+                    ) : null}
+                  </p>
+                  <p
+                    className="mt-0.5 text-xs text-muted-foreground"
+                    data-testid="child-transmission-summary"
+                  >
+                    {t.meals.length} repas · {t.naps.length} sieste{t.naps.length > 1 ? "s" : ""} ·{" "}
+                    {t.diaperChanges.length} change{t.diaperChanges.length > 1 ? "s" : ""} ·{" "}
+                    {t.activities.length} activité{t.activities.length > 1 ? "s" : ""} ·{" "}
+                    <span
+                      className={t.incidents.length > 0 ? "font-semibold text-destructive" : ""}
+                    >
+                      {t.incidents.length} incident{t.incidents.length > 1 ? "s" : ""}
+                    </span>
+                  </p>
+                </div>
+                <Link
+                  to="/transmissions/$childId"
+                  params={{ childId: child.id }}
+                  search={{ date: t.date }}
+                  className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2.5 py-1.5 text-[12.5px] font-medium shadow-sm transition-colors hover:bg-accent"
+                  aria-label={`Ouvrir la transmission du ${formatDate(t.date)}`}
+                >
+                  <BookOpen className="size-3.5" aria-hidden="true" />
+                  Ouvrir
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
       </TabsContent>

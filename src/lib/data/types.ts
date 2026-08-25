@@ -89,25 +89,15 @@ export interface ChildParent {
   isDemo: boolean;
 }
 
-export type AttendanceState = "attendu" | "present" | "parti" | "absent";
+/**
+ * Pointage quotidien (phase 3B) — voir src/lib/models/attendance.ts.
+ * Remplace l'ancien modèle « Attendance » (state attendu/present/parti/absent),
+ * migré automatiquement au chargement par db.ts.
+ */
+export type { AttendanceRecord } from "../models/attendance";
 
-export interface Attendance {
-  id: ID;
-  childId: ID;
-  date: string; // YYYY-MM-DD
-  expectedArrival: string | null; // HH:mm
-  expectedDeparture: string | null;
-  arrivalTime: string | null;
-  departureTime: string | null;
-  state: AttendanceState;
-  late: boolean;
-  earlyLeave: boolean;
-  broughtBy: string | null;
-  pickedUpBy: string | null;
-  recordedBy: ID | null;
-  absenceReason: string | null;
-  isDemo: boolean;
-}
+/** Cahier de liaison quotidien (phase 3C) — voir src/lib/models/daily-transmission.ts. */
+export type { DailyTransmission } from "../models/daily-transmission";
 
 export interface Employee {
   id: ID;
@@ -185,7 +175,8 @@ export interface Database {
   children: Child[];
   parents: Parent[];
   childParents: ChildParent[];
-  attendance: Attendance[];
+  attendance: import("../models/attendance").AttendanceRecord[];
+  dailyTransmissions: import("../models/daily-transmission").DailyTransmission[];
   employees: Employee[];
   invoices: Invoice[];
   payments: Payment[];
