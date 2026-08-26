@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, CalendarDays, FileText, Loader2, Printer, Thermometer } from "lucide-react";
 import { toast } from "sonner";
-import { AppShell } from "@/components/layout/app-shell";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,11 +40,7 @@ export const Route = createFileRoute("/transmissions/$childId")({
 });
 
 function Page() {
-  return (
-    <AppShell permission="transmissions.view">
-      <TransmissionDetail />
-    </AppShell>
-  );
+  return <TransmissionDetail />;
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
