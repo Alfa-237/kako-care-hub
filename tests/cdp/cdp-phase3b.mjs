@@ -1,4 +1,7 @@
-import WebSocket from "file:///../../node_modules/ws/index.js";
+import { pathToFileURL } from "node:url";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const WebSocket = (await import(pathToFileURL(require.resolve("ws")).href)).default;
 
 let msgId = 0;
 const pending = new Map();
@@ -62,6 +65,33 @@ async function clickUntil(sel, text, untilJs, maxTries = 6, settleMs = 600) {
       const ok = await ev(untilJs);
       if (ok && ok !== "false" && !String(ok).startsWith("ERR")) { await sleep(settleMs); return true; }
     } else { await sleep(settleMs); return true; }
+  }
+  return false;
+}
+// Sélection fiable d'une option Radix : attend que la position de l'option
+// soit stable (fin de l'animation d'ouverture) avant de cliquer, ce qui évite
+// le décalage de coordonnées dû au scroll/zoom d'ouverture du listbox.
+async function clickOptionStable(text, maxTries = 8) {
+  for (let i = 1; i <= maxTries; i++) {
+    const p1 = await ev(`(() => {
+      const el = [...document.querySelectorAll('[role="option"]')].find(o => o.textContent.trim().includes(${JSON.stringify(text)}));
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return JSON.stringify({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
+    })()`);
+    if (!p1) { await sleep(400); continue; }
+    await sleep(250);
+    const p2 = await ev(`(() => {
+      const el = [...document.querySelectorAll('[role="option"]')].find(o => o.textContent.trim().includes(${JSON.stringify(text)}));
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return JSON.stringify({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
+    })()`);
+    if (p2 === p1) {
+      const pos = JSON.parse(p1);
+      await rawClick(pos.x, pos.y);
+      return true;
+    }
   }
   return false;
 }
@@ -161,8 +191,8 @@ async function main() {
 
   // ---- T04 : filtre par statut Absent
   await clickUntil('[role="combobox"], button[role="combobox"]', "", `!!document.querySelector('[role=\"listbox\"]')`, 4);
-  await sleep(400);
-  await clickUntil('[role="option"]', "Absents", `[...document.querySelectorAll('[role=\"option\"]')].some(o => o.textContent.includes('Absents'))`, 4);
+  await sleep(600);
+  await clickOptionStable("Absents");
   await sleep(800);
   const absentOnly = await ev(`(() => {
     const cards = [...document.querySelectorAll('li[data-status]')];
@@ -172,8 +202,8 @@ async function main() {
   try { ao = JSON.parse(absentOnly); } catch {}
   // Remet le filtre sur Tous
   await clickUntil('[role="combobox"], button[role="combobox"]', "", `!!document.querySelector('[role=\"listbox\"]')`, 4);
-  await sleep(400);
-  await clickUntil('[role="option"]', "Tous les statuts", `[...document.querySelectorAll('[role=\"option\"]')].some(o => o.textContent.includes('Tous'))`, 4);
+  await sleep(600);
+  await clickOptionStable("Tous les statuts");
   await sleep(600);
   report("T04", "Filtre statut Absent : uniquement des absents", ao.allAbsent === true && Number(ao.n) > 0, absentOnly);
 

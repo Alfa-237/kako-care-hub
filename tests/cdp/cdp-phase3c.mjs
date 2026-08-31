@@ -1,4 +1,7 @@
-﻿import WebSocket from "file:///../../node_modules/ws/index.js";
+﻿import { pathToFileURL } from "node:url";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const WebSocket = (await import(pathToFileURL(require.resolve("ws")).href)).default;
 import { spawn } from "node:child_process";
 
 const BASE = "http://localhost:8080";
