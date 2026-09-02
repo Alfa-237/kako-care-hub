@@ -40,6 +40,7 @@ function useChildActions(child: Child) {
   const [busy, setBusy] = useState(false);
 
   const canEdit = can("children.edit");
+  const canDelete = can("children.delete");
   const name = fullName(child);
 
   async function handleDelete() {
@@ -65,6 +66,7 @@ function useChildActions(child: Child) {
     child,
     db,
     canEdit,
+    canDelete,
     name,
     editOpen,
     setEditOpen,
@@ -159,7 +161,7 @@ export function ChildActionsInline({ child }: { child: Child }) {
             <Pencil className="size-4" />
           </Button>
         ) : null}
-        {actions.canEdit ? (
+        {actions.canDelete ? (
           <Button
             size="icon"
             variant="ghost"
@@ -208,7 +210,7 @@ export function ChildActionsMenu({ child }: { child: Child }) {
               <Pencil className="size-4" /> Modifier
             </DropdownMenuItem>
           ) : null}
-          {actions.canEdit ? (
+          {actions.canDelete ? (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem

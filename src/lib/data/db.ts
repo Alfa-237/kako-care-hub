@@ -1,6 +1,6 @@
 import { useCallback, useSyncExternalStore } from "react";
 import { DB_KEY, storage } from "./storage";
-import { buildSeedDatabase } from "./seed";
+import { buildSeedDatabase, hashPassword } from "./seed";
 import type { Database } from "./types";
 import type { AttendanceRecord } from "../models/attendance";
 import { deriveFamiliesFromDatabase } from "../business/families";
@@ -45,6 +45,33 @@ export async function initDatabase(): Promise<Database> {
     // Migration 3C : ajoute la collection du cahier de liaison quotidien.
     if (!Array.isArray(next.dailyTransmissions)) {
       next = { ...next, dailyTransmissions: [] };
+      await storage.write(DB_KEY, next);
+    }
+    // Migration 6 : garantit la présence d'un administrateur actif (+ raccourci
+    // admin) et audite les journaux à 1000 entrées max.
+    const hasAdmin = next.users.some((u) => u.role === "ADMINISTRATEUR" && u.status === "actif");
+    if (!hasAdmin) {
+      next = {
+        ...next,
+        users: [
+          ...next.users,
+          {
+            id: `usr-admin-${Date.now().toString(36)}`,
+            username: "admin",
+            fullName: "Administrateur",
+            passwordHash: await hashPassword("admin123"),
+            role: "ADMINISTRATEUR",
+            status: "actif",
+            createdAt: new Date().toISOString(),
+            lastLoginAt: null,
+            isDemo: false,
+          },
+        ],
+      };
+      await storage.write(DB_KEY, next);
+    }
+    if (next.auditLogs.length > 1000) {
+      next = { ...next, auditLogs: next.auditLogs.slice(0, 1000) };
       await storage.write(DB_KEY, next);
     }
     db = next;
@@ -154,7 +181,7 @@ export async function logAction(
       action,
       detail,
     });
-    d.auditLogs = d.auditLogs.slice(0, 300);
+    d.auditLogs = d.auditLogs.slice(0, 1000);
   });
 }
 

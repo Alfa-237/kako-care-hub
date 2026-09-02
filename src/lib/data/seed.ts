@@ -105,12 +105,16 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 export async function buildSeedDatabase(): Promise<Database> {
-  const [admin, directeur, educateur, comptable] = await Promise.all([
-    hashPassword("admin123"),
-    hashPassword("directeur123"),
-    hashPassword("educateur123"),
-    hashPassword("comptable123"),
-  ]);
+  const [admin, directeur, educateur, comptable, secretaire, consultation, parent] =
+    await Promise.all([
+      hashPassword("admin123"),
+      hashPassword("dir123"),
+      hashPassword("edu123"),
+      hashPassword("comp123"),
+      hashPassword("sec123"),
+      hashPassword("view123"),
+      hashPassword("parent123"),
+    ]);
 
   const sections = [
     { id: "sec-001", name: "Les Poussins", ageMin: 3, ageMax: 12, capacity: 12, color: "poussins" },
@@ -579,6 +583,27 @@ export async function buildSeedDatabase(): Promise<Database> {
       passwordHash: comptable,
       role: "COMPTABLE",
     },
+    {
+      id: "usr-006",
+      username: "secretaire",
+      fullName: "Solange Mvondo",
+      passwordHash: secretaire,
+      role: "SECRETAIRE",
+    },
+    {
+      id: "usr-007",
+      username: "consultation",
+      fullName: "Kako Consultation",
+      passwordHash: consultation,
+      role: "CONSULTATION",
+    },
+    {
+      id: "usr-008",
+      username: "parent",
+      fullName: "Parent Test",
+      passwordHash: parent,
+      role: "PARENT",
+    },
   ].map((u) => ({
     ...u,
     role: u.role as never,
@@ -619,6 +644,15 @@ export async function buildSeedDatabase(): Promise<Database> {
 
   // Entités Family persistées, dérivées des relations de démonstration.
   base.families = deriveFamiliesFromDatabase(base);
+
+  // Rattache le compte PARENT de démonstration à la première famille ayant un enfant.
+  const firstParentFamily = base.families.find((f) =>
+    base.childParents.some((cp) => cp.parentId === f.primaryParentId),
+  );
+  if (firstParentFamily) {
+    const parentUser = base.users.find((u) => u.role === "PARENT");
+    if (parentUser) parentUser.familyId = firstParentFamily.id;
+  }
 
   // Renseigne la copie rapide familyId sur chaque pointage (phase 3B)
   // et chaque transmission (phase 3C).

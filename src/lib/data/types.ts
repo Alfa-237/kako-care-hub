@@ -3,7 +3,13 @@
 export type ID = string;
 
 export type RoleCode =
-  "ADMINISTRATEUR" | "DIRECTEUR" | "SECRETAIRE" | "EDUCATEUR" | "COMPTABLE" | "CONSULTATION";
+  | "ADMINISTRATEUR"
+  | "DIRECTEUR"
+  | "SECRETAIRE"
+  | "EDUCATEUR"
+  | "COMPTABLE"
+  | "CONSULTATION"
+  | "PARENT";
 
 export interface User {
   id: ID;
@@ -18,6 +24,8 @@ export interface User {
   /** Optionnel : renseigné pour les comptes créés via l'inscription. */
   email?: string;
   phone?: string;
+  /** Renseigné pour le rôle PARENT : identifiant de la famille rattachée. */
+  familyId?: ID | null;
 }
 
 export interface Establishment {

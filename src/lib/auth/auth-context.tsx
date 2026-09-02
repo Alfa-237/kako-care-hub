@@ -40,6 +40,8 @@ interface AuthValue {
   signOut: () => Promise<void>;
   unlock: (password: string) => Promise<boolean>;
   can: (permission: Permission) => boolean;
+  /** Vrai si l'utilisateur peut consulter l'enfant (filtré pour le rôle PARENT). */
+  canViewChild: (childId: string | null | undefined) => boolean;
 }
 
 const AuthContext = createContext<AuthValue | null>(null);
@@ -196,9 +198,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user],
   );
 
+  // Résolution des enfants d'une famille (pour le rôle PARENT).
+  const familyChildIds = useMemo(() => {
+    if (!db || !user || user.role !== "PARENT" || !user.familyId) return null;
+    const family = db.families.find((f) => f.id === user.familyId);
+    if (!family) return null;
+    const parentIds = new Set(
+      db.childParents
+        .filter((cp) => cp.parentId === family.primaryParentId)
+        .map((cp) => cp.parentId),
+    );
+    if (family.primaryParentId) parentIds.add(family.primaryParentId);
+    const childIds = new Set(
+      db.childParents.filter((cp) => parentIds.has(cp.parentId)).map((cp) => cp.childId),
+    );
+    return childIds;
+  }, [db, user]);
+
+  const canViewChild = useCallback(
+    (childId: string | null | undefined) => {
+      if (!childId) return false;
+      if (!user) return false;
+      if (user.role !== "PARENT") return true;
+      return familyChildIds?.has(childId) ?? false;
+    },
+    [user, familyChildIds],
+  );
+
   const value = useMemo<AuthValue>(
-    () => ({ user, ready: ready && !!db, locked, signIn, signUp, signOut, unlock, can }),
-    [user, ready, db, locked, signIn, signUp, signOut, unlock, can],
+    () => ({
+      user,
+      ready: ready && !!db,
+      locked,
+      signIn,
+      signUp,
+      signOut,
+      unlock,
+      can,
+      canViewChild,
+    }),
+    [user, ready, db, locked, signIn, signUp, signOut, unlock, can, canViewChild],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

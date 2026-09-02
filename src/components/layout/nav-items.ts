@@ -16,6 +16,8 @@ import {
   FileText,
   Settings,
   DatabaseBackup,
+  ShieldCheck,
+  ScrollText,
 } from "lucide-react";
 import type { Permission } from "@/lib/auth/permissions";
 
@@ -132,6 +134,20 @@ export const NAV_ITEMS: NavItem[] = [
     to: "/sauvegarde",
     icon: DatabaseBackup,
     permission: "backup.manage",
+    group: "Système",
+  },
+  {
+    label: "Utilisateurs",
+    to: "/utilisateurs",
+    icon: ShieldCheck,
+    permission: "users.manage",
+    group: "Système",
+  },
+  {
+    label: "Journal d'audit",
+    to: "/audit",
+    icon: ScrollText,
+    permission: "audit.view",
     group: "Système",
   },
 ];

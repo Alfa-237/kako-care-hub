@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Archive, ArrowLeft, Baby, Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -45,12 +45,21 @@ function ChildDetailPage() {
   const { from } = Route.useSearch();
   const navigate = useNavigate();
   const db = useDatabase();
-  const { can, user } = useAuth();
+  const { can, user, canViewChild } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [archiving, setArchiving] = useState(false);
 
   const cameFromFamily = Boolean(from && db?.parents.some((p) => p.id === from));
+
+  const child = db?.children.find((c) => c.id === id) ?? null;
+
+  useEffect(() => {
+    if (!child || !user || !db) return;
+    if (!canViewChild(child.id)) {
+      void navigate({ to: "/forbidden", replace: true });
+    }
+  }, [child, user, db, canViewChild, navigate]);
 
   function returnToFamily() {
     if (!from) return;
@@ -67,7 +76,6 @@ function ChildDetailPage() {
     );
   }
 
-  const child = db.children.find((c) => c.id === id);
   const section = child ? db.sections.find((s) => s.id === child.sectionId) : null;
 
   const isArchived = child?.status === "Sorti";

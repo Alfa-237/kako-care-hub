@@ -30,6 +30,7 @@ import { ChildActionsInline, ChildActionsMenu } from "@/components/children/chil
 import { ChildCard } from "@/components/children/child-card";
 import { ChildStatusBadge } from "@/components/children/child-status-badge";
 import { ChildFormDialog } from "@/components/children/child-form-dialog";
+import { useVisibleChildren, useIsFamilyRestricted } from "@/hooks/use-family-filter";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/enfants")({
@@ -78,6 +79,8 @@ type SortKey = (typeof SORT_OPTIONS)[number]["value"];
 function ChildrenPage() {
   const db = useDatabase();
   const { can } = useAuth();
+  const visibleChildren = useVisibleChildren();
+  const isFamilyRestricted = useIsFamilyRestricted();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"tous" | ChildStatus>("tous");
   const [showArchived, setShowArchived] = useState(false);
@@ -89,9 +92,9 @@ function ChildrenPage() {
   const sectionName = (id: string | null) => db?.sections.find((s) => s.id === id)?.name;
 
   const filtered = useMemo(() => {
-    if (!db) return [];
+    if (!db || !visibleChildren) return [];
     const q = query.trim().toLowerCase();
-    const base = db.children.filter((c) => {
+    const base = visibleChildren.filter((c) => {
       const matchesQuery =
         !q || fullName(c).toLowerCase().includes(q) || c.fileNumber.toLowerCase().includes(q);
       const matchesStatus =
@@ -115,7 +118,7 @@ function ChildrenPage() {
           return a.fileNumber.localeCompare(b.fileNumber);
       }
     });
-  }, [db, query, statusFilter, showArchived, sectionFilter, sort]);
+  }, [db, visibleChildren, query, statusFilter, showArchived, sectionFilter, sort]);
 
   if (!db) return null;
 
@@ -133,7 +136,11 @@ function ChildrenPage() {
       <div className="space-y-5">
         <PageHeader
           title="Gestion des enfants"
-          description={`${filtered.length} enfant(s) affiché(s) sur ${db.children.length} dossier(s)`}
+          description={
+            isFamilyRestricted
+              ? `${filtered.length} enfant(s) de votre famille`
+              : `${filtered.length} enfant(s) affiché(s) sur ${db.children.length} dossier(s)`
+          }
           actions={
             can("children.edit") ? (
               <Button onClick={() => setFormOpen(true)}>

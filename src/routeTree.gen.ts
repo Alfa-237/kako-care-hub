@@ -11,11 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ActivitesRouteImport } from './routes/activites'
+import { Route as AuditRouteImport } from './routes/audit'
 import { Route as ConnexionRouteImport } from './routes/connexion'
 import { Route as DocumentsRouteImport } from './routes/documents'
 import { Route as EnfantsRouteImport } from './routes/enfants'
 import { Route as FacturationRouteImport } from './routes/facturation'
 import { Route as FamillesRouteImport } from './routes/familles'
+import { Route as ForbiddenRouteImport } from './routes/forbidden'
 import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as InscriptionsRouteImport } from './routes/inscriptions'
 import { Route as PaiementsRouteImport } from './routes/paiements'
@@ -27,6 +29,7 @@ import { Route as RapportsRouteImport } from './routes/rapports'
 import { Route as RepasHygieneRouteImport } from './routes/repas-hygiene'
 import { Route as SauvegardeRouteImport } from './routes/sauvegarde'
 import { Route as TransmissionsRouteImport } from './routes/transmissions'
+import { Route as UtilisateursRouteImport } from './routes/utilisateurs'
 import { Route as EnfantsIdRouteImport } from './routes/enfants.$id'
 import { Route as FamillesIndexRouteImport } from './routes/familles.index'
 import { Route as FamillesIdRouteImport } from './routes/familles.$id'
@@ -41,6 +44,11 @@ const IndexRoute = IndexRouteImport.update({
 const ActivitesRoute = ActivitesRouteImport.update({
   id: '/activites',
   path: '/activites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditRoute = AuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConnexionRoute = ConnexionRouteImport.update({
@@ -66,6 +74,11 @@ const FacturationRoute = FacturationRouteImport.update({
 const FamillesRoute = FamillesRouteImport.update({
   id: '/familles',
   path: '/familles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForbiddenRoute = ForbiddenRouteImport.update({
+  id: '/forbidden',
+  path: '/forbidden',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InscriptionRoute = InscriptionRouteImport.update({
@@ -123,6 +136,11 @@ const TransmissionsRoute = TransmissionsRouteImport.update({
   path: '/transmissions',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UtilisateursRoute = UtilisateursRouteImport.update({
+  id: '/utilisateurs',
+  path: '/utilisateurs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EnfantsIdRoute = EnfantsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -152,11 +170,13 @@ const TransmissionsChildIdRoute = TransmissionsChildIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activites': typeof ActivitesRoute
+  '/audit': typeof AuditRoute
   '/connexion': typeof ConnexionRoute
   '/documents': typeof DocumentsRoute
   '/enfants': typeof EnfantsRouteWithChildren
   '/facturation': typeof FacturationRoute
   '/familles': typeof FamillesRouteWithChildren
+  '/forbidden': typeof ForbiddenRoute
   '/inscription': typeof InscriptionRoute
   '/inscriptions': typeof InscriptionsRoute
   '/paiements': typeof PaiementsRoute
@@ -168,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/repas-hygiene': typeof RepasHygieneRoute
   '/sauvegarde': typeof SauvegardeRoute
   '/transmissions': typeof TransmissionsRouteWithChildren
+  '/utilisateurs': typeof UtilisateursRoute
   '/enfants/$id': typeof EnfantsIdRoute
   '/familles/$id': typeof FamillesIdRoute
   '/transmissions/$childId': typeof TransmissionsChildIdRoute
@@ -177,10 +198,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activites': typeof ActivitesRoute
+  '/audit': typeof AuditRoute
   '/connexion': typeof ConnexionRoute
   '/documents': typeof DocumentsRoute
   '/enfants': typeof EnfantsRouteWithChildren
   '/facturation': typeof FacturationRoute
+  '/forbidden': typeof ForbiddenRoute
   '/inscription': typeof InscriptionRoute
   '/inscriptions': typeof InscriptionsRoute
   '/paiements': typeof PaiementsRoute
@@ -191,6 +214,7 @@ export interface FileRoutesByTo {
   '/rapports': typeof RapportsRoute
   '/repas-hygiene': typeof RepasHygieneRoute
   '/sauvegarde': typeof SauvegardeRoute
+  '/utilisateurs': typeof UtilisateursRoute
   '/enfants/$id': typeof EnfantsIdRoute
   '/familles/$id': typeof FamillesIdRoute
   '/transmissions/$childId': typeof TransmissionsChildIdRoute
@@ -201,11 +225,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/activites': typeof ActivitesRoute
+  '/audit': typeof AuditRoute
   '/connexion': typeof ConnexionRoute
   '/documents': typeof DocumentsRoute
   '/enfants': typeof EnfantsRouteWithChildren
   '/facturation': typeof FacturationRoute
   '/familles': typeof FamillesRouteWithChildren
+  '/forbidden': typeof ForbiddenRoute
   '/inscription': typeof InscriptionRoute
   '/inscriptions': typeof InscriptionsRoute
   '/paiements': typeof PaiementsRoute
@@ -217,6 +243,7 @@ export interface FileRoutesById {
   '/repas-hygiene': typeof RepasHygieneRoute
   '/sauvegarde': typeof SauvegardeRoute
   '/transmissions': typeof TransmissionsRouteWithChildren
+  '/utilisateurs': typeof UtilisateursRoute
   '/enfants/$id': typeof EnfantsIdRoute
   '/familles/$id': typeof FamillesIdRoute
   '/transmissions/$childId': typeof TransmissionsChildIdRoute
@@ -228,11 +255,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/activites'
+    | '/audit'
     | '/connexion'
     | '/documents'
     | '/enfants'
     | '/facturation'
     | '/familles'
+    | '/forbidden'
     | '/inscription'
     | '/inscriptions'
     | '/paiements'
@@ -244,6 +273,7 @@ export interface FileRouteTypes {
     | '/repas-hygiene'
     | '/sauvegarde'
     | '/transmissions'
+    | '/utilisateurs'
     | '/enfants/$id'
     | '/familles/$id'
     | '/transmissions/$childId'
@@ -253,10 +283,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/activites'
+    | '/audit'
     | '/connexion'
     | '/documents'
     | '/enfants'
     | '/facturation'
+    | '/forbidden'
     | '/inscription'
     | '/inscriptions'
     | '/paiements'
@@ -267,6 +299,7 @@ export interface FileRouteTypes {
     | '/rapports'
     | '/repas-hygiene'
     | '/sauvegarde'
+    | '/utilisateurs'
     | '/enfants/$id'
     | '/familles/$id'
     | '/transmissions/$childId'
@@ -276,11 +309,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/activites'
+    | '/audit'
     | '/connexion'
     | '/documents'
     | '/enfants'
     | '/facturation'
     | '/familles'
+    | '/forbidden'
     | '/inscription'
     | '/inscriptions'
     | '/paiements'
@@ -292,6 +327,7 @@ export interface FileRouteTypes {
     | '/repas-hygiene'
     | '/sauvegarde'
     | '/transmissions'
+    | '/utilisateurs'
     | '/enfants/$id'
     | '/familles/$id'
     | '/transmissions/$childId'
@@ -302,11 +338,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivitesRoute: typeof ActivitesRoute
+  AuditRoute: typeof AuditRoute
   ConnexionRoute: typeof ConnexionRoute
   DocumentsRoute: typeof DocumentsRoute
   EnfantsRoute: typeof EnfantsRouteWithChildren
   FacturationRoute: typeof FacturationRoute
   FamillesRoute: typeof FamillesRouteWithChildren
+  ForbiddenRoute: typeof ForbiddenRoute
   InscriptionRoute: typeof InscriptionRoute
   InscriptionsRoute: typeof InscriptionsRoute
   PaiementsRoute: typeof PaiementsRoute
@@ -318,6 +356,7 @@ export interface RootRouteChildren {
   RepasHygieneRoute: typeof RepasHygieneRoute
   SauvegardeRoute: typeof SauvegardeRoute
   TransmissionsRoute: typeof TransmissionsRouteWithChildren
+  UtilisateursRoute: typeof UtilisateursRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -334,6 +373,13 @@ declare module '@tanstack/react-router' {
       path: '/activites'
       fullPath: '/activites'
       preLoaderRoute: typeof ActivitesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/audit': {
+      id: '/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AuditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/connexion': {
@@ -369,6 +415,13 @@ declare module '@tanstack/react-router' {
       path: '/familles'
       fullPath: '/familles'
       preLoaderRoute: typeof FamillesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forbidden': {
+      id: '/forbidden'
+      path: '/forbidden'
+      fullPath: '/forbidden'
+      preLoaderRoute: typeof ForbiddenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inscription': {
@@ -446,6 +499,13 @@ declare module '@tanstack/react-router' {
       path: '/transmissions'
       fullPath: '/transmissions'
       preLoaderRoute: typeof TransmissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/utilisateurs': {
+      id: '/utilisateurs'
+      path: '/utilisateurs'
+      fullPath: '/utilisateurs'
+      preLoaderRoute: typeof UtilisateursRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/enfants/$id': {
@@ -528,11 +588,13 @@ const TransmissionsRouteWithChildren = TransmissionsRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivitesRoute: ActivitesRoute,
+  AuditRoute: AuditRoute,
   ConnexionRoute: ConnexionRoute,
   DocumentsRoute: DocumentsRoute,
   EnfantsRoute: EnfantsRouteWithChildren,
   FacturationRoute: FacturationRoute,
   FamillesRoute: FamillesRouteWithChildren,
+  ForbiddenRoute: ForbiddenRoute,
   InscriptionRoute: InscriptionRoute,
   InscriptionsRoute: InscriptionsRoute,
   PaiementsRoute: PaiementsRoute,
@@ -544,6 +606,7 @@ const rootRouteChildren: RootRouteChildren = {
   RepasHygieneRoute: RepasHygieneRoute,
   SauvegardeRoute: SauvegardeRoute,
   TransmissionsRoute: TransmissionsRouteWithChildren,
+  UtilisateursRoute: UtilisateursRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

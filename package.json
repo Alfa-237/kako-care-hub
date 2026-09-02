@@ -13,7 +13,8 @@
     "test:cdp:3a": "node tests/cdp/cdp-phase3a.mjs",
     "test:cdp:2b": "node tests/cdp/cdp-phase2b.mjs",
     "test:cdp:3b": "node tests/cdp/cdp-phase3b.mjs",
-    "test:cdp:3c": "node tests/cdp/cdp-phase3c.mjs"
+    "test:cdp:3c": "node tests/cdp/cdp-phase3c.mjs",
+    "test:cdp:6": "node tests/cdp/cdp-phase6.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

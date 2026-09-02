@@ -102,9 +102,16 @@ export function AppShell({
     if (ready && !user) navigate({ to: "/connexion", replace: true });
   }, [ready, user, navigate]);
 
+  const denied = Boolean(permission) && !can(permission ?? "dashboard.view");
+
+  useEffect(() => {
+    if (ready && user && denied) navigate({ to: "/forbidden", replace: true });
+  }, [ready, user, denied, navigate]);
+
   if (!ready) return <FullScreenLoader />;
   if (!user) return <FullScreenLoader />;
   if (locked) return <LockScreen />;
+  if (denied) return <FullScreenLoader />;
 
   return (
     <div className="flex min-h-screen w-full bg-background">
