@@ -122,7 +122,9 @@ async function jsClickScoped(liText, title) {
 }
 
 async function typeInto(sel, text) {
-  await ev(`(() => { const i = document.querySelector(${JSON.stringify(sel)}); if (i) i.value=''; i.focus(); })()`);
+  await ev(
+    `(() => { const i = document.querySelector(${JSON.stringify(sel)}); if (i) i.value=''; i.focus(); })()`,
+  );
   await sleep(200);
   await send("Input.insertText", { text });
   await sleep(250);
@@ -134,7 +136,9 @@ async function goto(path) {
 }
 
 async function setSession(userId) {
-  await ev(`localStorage.setItem("kako.session.v1", JSON.stringify({ userId: ${JSON.stringify(userId)}, startedAt: new Date().toISOString() })); "ok"`);
+  await ev(
+    `localStorage.setItem("kako.session.v1", JSON.stringify({ userId: ${JSON.stringify(userId)}, startedAt: new Date().toISOString() })); "ok"`,
+  );
 }
 
 async function seedWithFixtures() {
@@ -167,9 +171,17 @@ async function seedWithFixtures() {
 
 async function openContactsTab() {
   await goto(`/familles/${FAMILY_ID}`);
-  await waitFor(`document.body.innerText.includes("Autorisations & contacts")`, "fiche famille", 60000);
+  await waitFor(
+    `document.body.innerText.includes("Autorisations & contacts")`,
+    "fiche famille",
+    60000,
+  );
   await jsClick("[role=tab]", "Autorisations & contacts");
-  return waitFor(`(document.querySelector('[role="tab"][data-state="active"]')||{textContent:''}).textContent.includes('Autorisations')`, "onglet contacts actif", 15000);
+  return waitFor(
+    `(document.querySelector('[role="tab"][data-state="active"]')||{textContent:''}).textContent.includes('Autorisations')`,
+    "onglet contacts actif",
+    15000,
+  );
 }
 
 // Candidat départ : enfant d'une famille à contacts, avec pointage présent+arrivée
@@ -199,7 +211,9 @@ async function departureCandidate(excludeFamilyId) {
     return null;
   })()`);
   let o = null;
-  try { o = JSON.parse(t); } catch {}
+  try {
+    o = JSON.parse(t);
+  } catch {}
   return o;
 }
 
@@ -209,10 +223,16 @@ async function main() {
   const targets = await (await fetch("http://127.0.0.1:9223/json/list")).json();
   const page = targets.find((t) => t.type === "page");
   ws = new WebSocket(page.webSocketDebuggerUrl);
-  await new Promise((r, j) => { ws.on("open", r); ws.on("error", j); });
+  await new Promise((r, j) => {
+    ws.on("open", r);
+    ws.on("error", j);
+  });
   ws.on("message", (d) => {
     const m = JSON.parse(d.toString());
-    if (m.id && pending.has(m.id)) { pending.get(m.id).resolve(m); pending.delete(m.id); }
+    if (m.id && pending.has(m.id)) {
+      pending.get(m.id).resolve(m);
+      pending.delete(m.id);
+    }
   });
   await send("Runtime.enable");
   await send("Page.enable");
@@ -225,7 +245,12 @@ async function main() {
   await goto("/connexion");
   await waitFor(`document.body.innerText.length > 50`, "connexion page");
   await seedWithFixtures();
-  FAMILY_ID = JSON.parse(await ev(`JSON.stringify(((() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); return (db.families&&db.families.length)?db.families[0].id:null; })()))`)) || "par-001";
+  FAMILY_ID =
+    JSON.parse(
+      await ev(
+        `JSON.stringify(((() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); return (db.families&&db.families.length)?db.families[0].id:null; })()))`,
+      ),
+    ) || "par-001";
   console.log(`   (famille de référence : ${FAMILY_ID})`);
 
   await setSession("usr-001");
@@ -233,18 +258,28 @@ async function main() {
   // ---------- T01 : onglet + lecture des contacts seed
   {
     await openContactsTab();
-    const hasPack = await waitFor(`document.body.innerText.includes("Personnes autorisées")`, "panneau contacts");
+    const hasPack = await waitFor(
+      `document.body.innerText.includes("Personnes autorisées")`,
+      "panneau contacts",
+    );
     const hasMarie = await ev(`document.body.innerText.includes("Marie")`);
     const hasPaul = await ev(`document.body.innerText.includes("Paul Mbarga")`);
     const hasAmina = await ev(`document.body.innerText.includes("Amina")`);
     const hasPickupBadge = await ev(`document.body.innerText.includes("Récupération")`);
     const hasUrgence = await ev(`document.body.innerText.includes("Urgence")`);
-    report("T01", "Onglet « Autorisations & contacts » + contacts seed lus", hasPack && hasMarie && hasAmina && hasPaul && hasPickupBadge && hasUrgence, `Marie=${hasMarie} Amina=${hasAmina} badges(P/U)=${hasPickupBadge}/${hasUrgence}`);
+    report(
+      "T01",
+      "Onglet « Autorisations & contacts » + contacts seed lus",
+      hasPack && hasMarie && hasAmina && hasPaul && hasPickupBadge && hasUrgence,
+      `Marie=${hasMarie} Amina=${hasAmina} badges(P/U)=${hasPickupBadge}/${hasUrgence}`,
+    );
   }
 
   // ---------- T02 : création contact (autorisation Récupération)
   {
-    const before = Number(await ev(`(JSON.parse(localStorage.getItem("kako.db.v1")).authorizedPersons||[]).length`));
+    const before = Number(
+      await ev(`(JSON.parse(localStorage.getItem("kako.db.v1")).authorizedPersons||[]).length`),
+    );
     const opened = await jsClick("button", "Ajouter un contact");
     await waitFor(`!!document.querySelector('#ap-first-name')`, "dialog ajout");
     await typeInto("#ap-first-name", "Kenza");
@@ -252,16 +287,31 @@ async function main() {
     await typeInto("#ap-relation", "Tante");
     await typeInto("#ap-phone", "+237 600 12 34 56");
     await jsClick("#ap-canPickup", "");
-    const checked = await ev(`(document.querySelector('#ap-canPickup')||{}).getAttribute ? document.querySelector('#ap-canPickup').getAttribute('aria-checked') : 'none'`);
+    const checked = await ev(
+      `(document.querySelector('#ap-canPickup')||{}).getAttribute ? document.querySelector('#ap-canPickup').getAttribute('aria-checked') : 'none'`,
+    );
     await jsClick('[role="dialog"] button', "Ajouter le contact");
     // la fermeture du dialogue est gérée par l'animation Radix ; on vérifie la
     // persistance métier + l'affichage plutôt qu'un unmount strict.
     await sleep(1200);
-    const after = Number(await ev(`(JSON.parse(localStorage.getItem("kako.db.v1")).authorizedPersons||[]).length`));
-    const shown = await ev(`document.body.innerText.includes("Kenza") && document.body.innerText.includes("Benali")`);
-    const relink = await waitFor(`document.body.innerText.includes("Tante")`, "nouveau contact", 8000);
+    const after = Number(
+      await ev(`(JSON.parse(localStorage.getItem("kako.db.v1")).authorizedPersons||[]).length`),
+    );
+    const shown = await ev(
+      `document.body.innerText.includes("Kenza") && document.body.innerText.includes("Benali")`,
+    );
+    const relink = await waitFor(
+      `document.body.innerText.includes("Tante")`,
+      "nouveau contact",
+      8000,
+    );
     await waitFor(`!document.querySelector('#ap-first-name')`, "dialog fermé (T02)");
-    report("T02", "Création contact (autorisation Récupération) persisté + affiché", opened && checked === "true" && after === before + 1 && shown && relink, `before=${before} after=${after} checked=${checked} shown=${shown}`);
+    report(
+      "T02",
+      "Création contact (autorisation Récupération) persisté + affiché",
+      opened && checked === "true" && after === before + 1 && shown && relink,
+      `before=${before} after=${after} checked=${checked} shown=${shown}`,
+    );
   }
 
   // ---------- T03 : validation Zod — 0 autorisation → message FR
@@ -272,9 +322,15 @@ async function main() {
     await typeInto("#ap-last-name", "Test");
     await typeInto("#ap-relation", "Grand-mère");
     await typeInto("#ap-phone", "+237 699 00 00 00");
-    await ev(`['#ap-canPickup','#ap-emergencyContact','#ap-receivesDocuments','#ap-canSign'].forEach(s => { const el = document.querySelector(s); if (el && el.getAttribute('aria-checked') === 'true') { for (const t of ['pointerdown','mousedown','pointerup','mouseup','click']) { const e = t.startsWith('pointer') ? new PointerEvent(t,{bubbles:true,button:0,pointerId:1}) : new MouseEvent(t,{bubbles:true,button:0}); el.dispatchEvent(e); } } }); "ok"`);
+    await ev(
+      `['#ap-canPickup','#ap-emergencyContact','#ap-receivesDocuments','#ap-canSign'].forEach(s => { const el = document.querySelector(s); if (el && el.getAttribute('aria-checked') === 'true') { for (const t of ['pointerdown','mousedown','pointerup','mouseup','click']) { const e = t.startsWith('pointer') ? new PointerEvent(t,{bubbles:true,button:0,pointerId:1}) : new MouseEvent(t,{bubbles:true,button:0}); el.dispatchEvent(e); } } }); "ok"`,
+    );
     await jsClick('[role="dialog"] button', "Ajouter le contact");
-    const msg = await waitFor(`document.body.innerText.includes("Au moins une autorisation")`, "message validation", 8000);
+    const msg = await waitFor(
+      `document.body.innerText.includes("Au moins une autorisation")`,
+      "message validation",
+      8000,
+    );
     await jsClick('[role="dialog"] button', "Annuler");
     await waitFor(`!document.querySelector('#ap-first-name')`, "dialog fermé (T03)");
     report("T03", "Validation : ≥1 autorisation requise (message FR)", !!msg);
@@ -282,7 +338,9 @@ async function main() {
 
   // ---------- T04 : édition (renommage) + suppression d'un contact
   {
-    const before = Number(await ev(`(JSON.parse(localStorage.getItem("kako.db.v1")).authorizedPersons||[]).length`));
+    const before = Number(
+      await ev(`(JSON.parse(localStorage.getItem("kako.db.v1")).authorizedPersons||[]).length`),
+    );
     const editOk = await jsClickScoped("Kenza", "Modifier ce contact");
     await waitFor(`!!document.querySelector('#ap-first-name')`, "dialog édition");
     await typeInto("#ap-first-name", "KenzaM");
@@ -292,34 +350,53 @@ async function main() {
     await waitFor(`!!document.querySelector('[role="alertdialog"]')`, "confirm suppression");
     await jsClick('[role="alertdialog"] button', "Supprimer");
     await sleep(1200);
-    const after = Number(await ev(`(JSON.parse(localStorage.getItem("kako.db.v1")).authorizedPersons||[]).length`));
+    const after = Number(
+      await ev(`(JSON.parse(localStorage.getItem("kako.db.v1")).authorizedPersons||[]).length`),
+    );
     await waitFor(`!document.body.innerText.includes("KenzaM")`, "contact supprimé");
-    report("T04", "Édition + suppression d'un contact (confirmation) persistés", editOk && edited && delOk && after === before - 1, `edit=${editOk} del=${delOk} before=${before} after=${after}`);
+    report(
+      "T04",
+      "Édition + suppression d'un contact (confirmation) persistés",
+      editOk && edited && delOk && after === before - 1,
+      `edit=${editOk} del=${delOk} before=${before} after=${after}`,
+    );
   }
 
   // ---------- T05 : le SELECT du départ liste les personnes autorisées
   {
     const cand = await departureCandidate(null);
-    if (!cand) { report("T05", "Départ : SELECT des personnes autorisées", false, "aucun candidat départ"); }
-    else {
+    if (!cand) {
+      report("T05", "Départ : SELECT des personnes autorisées", false, "aucun candidat départ");
+    } else {
       await goto("/presences");
       await waitFor(`document.body.innerText.includes("Présences")`, "presences");
       await jsClick(`[aria-label]`, `Pointer le départ de ${cand.name}`);
       await waitFor(`!!document.querySelector('#departure-pickup')`, "dialog départ");
       await jsClick("#departure-pickup", "");
       await waitFor(`!!document.querySelector('[role="listbox"]')`, "listbox ouvert");
-      const opts = JSON.parse(await ev(`JSON.stringify([...document.querySelectorAll('[role="option"]')].map(o => o.textContent.trim()))`));
-      const ok = opts.some((o) => o.includes(cand.pick)) && opts.some((o) => o.includes("Autre personne"));
+      const opts = JSON.parse(
+        await ev(
+          `JSON.stringify([...document.querySelectorAll('[role="option"]')].map(o => o.textContent.trim()))`,
+        ),
+      );
+      const ok =
+        opts.some((o) => o.includes(cand.pick)) && opts.some((o) => o.includes("Autre personne"));
       await jsClick('[role="dialog"] button', "Annuler");
-      report("T05", "Départ : SELECT des personnes autorisées de la famille", ok, ok ? "ok" : `opts=${JSON.stringify(opts)}`);
+      report(
+        "T05",
+        "Départ : SELECT des personnes autorisées de la famille",
+        ok,
+        ok ? "ok" : `opts=${JSON.stringify(opts)}`,
+      );
     }
   }
 
   // ---------- T06 : « Autre personne… » → alerte + identité obligatoire
   {
     const cand = await departureCandidate(null);
-    if (!cand) { report("T06", "« Autre personne »", false, "aucun candidat départ"); }
-    else {
+    if (!cand) {
+      report("T06", "« Autre personne »", false, "aucun candidat départ");
+    } else {
       await goto("/presences");
       await waitFor(`document.body.innerText.includes("Présences")`, "presences");
       await jsClick(`[aria-label]`, `Pointer le départ de ${cand.name}`);
@@ -327,29 +404,40 @@ async function main() {
       await jsClick("#departure-pickup", "");
       await waitFor(`!!document.querySelector('[role="listbox"]')`, "listbox ouvert");
       const otherPicked = await jsClickOption("Autre personne");
-      const hasAlert = await waitFor(`[...document.querySelectorAll('[role="alert"]')].some(a => a.textContent.includes("Personne non autorisée"))`, "alerte non autorisée");
+      const hasAlert = await waitFor(
+        `[...document.querySelectorAll('[role="alert"]')].some(a => a.textContent.includes("Personne non autorisée"))`,
+        "alerte non autorisée",
+      );
       const hasIdentityField = await ev(`!!document.querySelector('#departure-identity')`);
       // tente de valider sans identité → le dialogue reste ouvert, aucun départ enregistré
       await jsClick('[role="dialog"] button', "Enregistrer le départ");
       await sleep(800);
       const dialogStillOpen = await ev(`!!document.querySelector('#departure-pickup')`);
-      const st = JSON.parse(await ev(`(() => {
+      const st = JSON.parse(
+        await ev(`(() => {
         const db = JSON.parse(localStorage.getItem("kako.db.v1"));
         const today = new Date().toLocaleDateString('sv-SE');
         const rec = (db.attendance||[]).find(x => x.childId === ${JSON.stringify(cand.childId)} && x.date === today);
         return JSON.stringify({ auth: rec && rec.pickupAuthorized, dep: rec && rec.departureTime });
-      })()`));
+      })()`),
+      );
       const blocked = dialogStillOpen && st.dep === null;
       await jsClick('[role="dialog"] button', "Annuler");
-      report("T06", "« Autre personne » : alerte + identité obligatoire (départ bloqué)", otherPicked && hasAlert && hasIdentityField && blocked, `other=${otherPicked} alert=${hasAlert} field=${hasIdentityField} blocked=${blocked}`);
+      report(
+        "T06",
+        "« Autre personne » : alerte + identité obligatoire (départ bloqué)",
+        otherPicked && hasAlert && hasIdentityField && blocked,
+        `other=${otherPicked} alert=${hasAlert} field=${hasIdentityField} blocked=${blocked}`,
+      );
     }
   }
 
   // ---------- T07 : départ « Autre personne » → pickupAuthorized=false + badge
   {
     const cand = await departureCandidate(null);
-    if (!cand) { report("T07", "Départ non autorisé", false, "aucun candidat départ"); }
-    else {
+    if (!cand) {
+      report("T07", "Départ non autorisé", false, "aucun candidat départ");
+    } else {
       await goto("/presences");
       await waitFor(`document.body.innerText.includes("Présences")`, "presences");
       await jsClick(`[aria-label]`, `Pointer le départ de ${cand.name}`);
@@ -362,24 +450,36 @@ async function main() {
       await typeInto("#departure-identity", "CNI-000000");
       await jsClick('[role="dialog"] button', "Enregistrer le départ");
       await sleep(1800);
-      const st = JSON.parse(await ev(`(() => {
+      const st = JSON.parse(
+        await ev(`(() => {
         const db = JSON.parse(localStorage.getItem("kako.db.v1"));
         const today = new Date().toLocaleDateString('sv-SE');
         const rec = (db.attendance||[]).find(x => x.childId === ${JSON.stringify(cand.childId)} && x.date === today);
         return JSON.stringify({ auth: rec && rec.pickupAuthorized, pickup: rec && rec.departurePickedUpBy, dep: rec && rec.departureTime });
-      })()`));
+      })()`),
+      );
       const persisted = st.auth === false && st.pickup === "Inconnu Passant" && !!st.dep;
       await goto("/presences");
-      const badge = await waitFor(`document.querySelectorAll('[data-testid="unauthorized-departure"]').length > 0`, "badge départ non autorisé", 15000);
-      report("T07", "Départ non autorisé : pickupAuthorized=false + badge ⚠", persisted && badge, `db=${JSON.stringify(st)} badge=${badge}`);
+      const badge = await waitFor(
+        `document.querySelectorAll('[data-testid="unauthorized-departure"]').length > 0`,
+        "badge départ non autorisé",
+        15000,
+      );
+      report(
+        "T07",
+        "Départ non autorisé : pickupAuthorized=false + badge ⚠",
+        persisted && badge,
+        `db=${JSON.stringify(st)} badge=${badge}`,
+      );
     }
   }
 
   // ---------- T08 : départ avec personne autorisée → pickupAuthorized=true
   {
     const cand = await departureCandidate(null);
-    if (!cand) { report("T08", "Départ avec personne autorisée", false, "aucun candidat départ"); }
-    else {
+    if (!cand) {
+      report("T08", "Départ avec personne autorisée", false, "aucun candidat départ");
+    } else {
       await goto("/presences");
       await waitFor(`document.body.innerText.includes("Présences")`, "presences");
       await jsClick(`[aria-label]`, `Pointer le départ de ${cand.name}`);
@@ -389,13 +489,20 @@ async function main() {
       const picked = await jsClickOption(cand.pick);
       await jsClick('[role="dialog"] button', "Enregistrer le départ");
       await sleep(1800);
-      const st = JSON.parse(await ev(`(() => {
+      const st = JSON.parse(
+        await ev(`(() => {
         const db = JSON.parse(localStorage.getItem("kako.db.v1"));
         const today = new Date().toLocaleDateString('sv-SE');
         const rec = (db.attendance||[]).find(x => x.childId === ${JSON.stringify(cand.childId)} && x.date === today);
         return JSON.stringify({ auth: rec && rec.pickupAuthorized, pickup: rec && rec.departurePickedUpBy, dep: rec && rec.departureTime });
-      })()`));
-      report("T08", "Départ avec personne autorisée : pickupAuthorized=true", picked && st.auth === true && !!st.pickup && !!st.dep, `picked=${picked} db=${JSON.stringify(st)}`);
+      })()`),
+      );
+      report(
+        "T08",
+        "Départ avec personne autorisée : pickupAuthorized=true",
+        picked && st.auth === true && !!st.pickup && !!st.dep,
+        `picked=${picked} db=${JSON.stringify(st)}`,
+      );
     }
   }
 
@@ -404,19 +511,40 @@ async function main() {
     await setSession("usr-003");
     await goto(`/familles/${FAMILY_ID}`);
     await openContactsTab();
-    await waitFor(`document.body.innerText.includes("Personnes autorisées")`, "panneau contacts (éducateur)");
+    await waitFor(
+      `document.body.innerText.includes("Personnes autorisées")`,
+      "panneau contacts (éducateur)",
+    );
     const seesMarie = await ev(`document.body.innerText.includes("Marie")`);
-    const noAdd = await ev(`![...document.querySelectorAll('button')].some(b => b.textContent.includes("Ajouter un contact"))`);
-    const noManage = await ev(`[...document.querySelectorAll('[title="Modifier ce contact"], [title="Supprimer ce contact"]')].length === 0`);
-    report("T09", "Éducateur : contacts en lecture seule", seesMarie && noAdd && noManage, `vue=${seesMarie} add=${noAdd} manage=${noManage}`);
+    const noAdd = await ev(
+      `![...document.querySelectorAll('button')].some(b => b.textContent.includes("Ajouter un contact"))`,
+    );
+    const noManage = await ev(
+      `[...document.querySelectorAll('[title="Modifier ce contact"], [title="Supprimer ce contact"]')].length === 0`,
+    );
+    report(
+      "T09",
+      "Éducateur : contacts en lecture seule",
+      seesMarie && noAdd && noManage,
+      `vue=${seesMarie} add=${noAdd} manage=${noManage}`,
+    );
   }
 
   // ---------- T10 : journal d'audit création/suppression contact
   {
-    const arr = JSON.parse(await ev(`JSON.stringify((JSON.parse(localStorage.getItem("kako.db.v1")).auditLogs||[]).map(l => l.action))`));
+    const arr = JSON.parse(
+      await ev(
+        `JSON.stringify((JSON.parse(localStorage.getItem("kako.db.v1")).auditLogs||[]).map(l => l.action))`,
+      ),
+    );
     const hasCreate = arr.some((a) => String(a).includes("Création contact"));
     const hasDelete = arr.some((a) => String(a).includes("Suppression contact"));
-    report("T10", "Journal d'audit : création + suppression de contact", hasCreate && hasDelete, arr.join(" | "));
+    report(
+      "T10",
+      "Journal d'audit : création + suppression de contact",
+      hasCreate && hasDelete,
+      arr.join(" | "),
+    );
   }
 
   const passed = results.filter((r) => r.pass).length;
@@ -425,4 +553,7 @@ async function main() {
   process.exit(passed === results.length ? 0 : 1);
 }
 
-main().catch((e) => { console.error(e); process.exit(2); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(2);
+});

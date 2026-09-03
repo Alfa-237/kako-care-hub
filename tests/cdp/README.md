@@ -22,12 +22,12 @@ Cela garantit que `buildSeedDatabase()` génère **toujours les mêmes données*
 
 ## Commandes
 
-| Phase | Description | Commande |
-|-------|-------------|----------|
-| 3A | Entités Family + Data Service | `npm run test:cdp:3a` |
-| 2B | UX Familles (liste/mosaïque, fiche) | `npm run test:cdp:2b` |
-| 3B | Présences / Pointage | `npm run test:cdp:3b` |
-| 3C | Transmissions / Cahier de liaison | `npm run test:cdp:3c` |
+| Phase | Description                         | Commande              |
+| ----- | ----------------------------------- | --------------------- |
+| 3A    | Entités Family + Data Service       | `npm run test:cdp:3a` |
+| 2B    | UX Familles (liste/mosaïque, fiche) | `npm run test:cdp:2b` |
+| 3B    | Présences / Pointage                | `npm run test:cdp:3b` |
+| 3C    | Transmissions / Cahier de liaison   | `npm run test:cdp:3c` |
 
 Lancer **une seule suite à la fois** (toutes utilisent le port CDP 9223).
 

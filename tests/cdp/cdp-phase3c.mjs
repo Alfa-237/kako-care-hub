@@ -26,8 +26,17 @@ function send(method, params = {}) {
   });
 }
 async function ev(expr) {
-  const res = await send("Runtime.evaluate", { expression: expr, awaitPromise: true, returnByValue: true, userGesture: true });
-  if (res.exceptionDetails) return "ERR:" + (res.exceptionDetails.exception?.description || res.exceptionDetails.text || "").slice(0, 400);
+  const res = await send("Runtime.evaluate", {
+    expression: expr,
+    awaitPromise: true,
+    returnByValue: true,
+    userGesture: true,
+  });
+  if (res.exceptionDetails)
+    return (
+      "ERR:" +
+      (res.exceptionDetails.exception?.description || res.exceptionDetails.text || "").slice(0, 400)
+    );
   return res.result?.result?.value;
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -36,7 +45,10 @@ function report(id, label, pass, detail = "") {
   if (pass) passedIds.add(id);
   const already = results.find((r) => r.id === id);
   if (already) {
-    if (pass && !already.pass) { already.pass = true; console.log(`PASS  ${id} - ${label} [revalidé] ${detail}`); }
+    if (pass && !already.pass) {
+      already.pass = true;
+      console.log(`PASS  ${id} - ${label} [revalidé] ${detail}`);
+    }
     return;
   }
   results.push({ id, pass });
@@ -49,7 +61,10 @@ async function assertAlive() {
     throw new Error("WS_CLOSED"); // onglet crashé → reconnexion
 }
 async function t(id, label, fn) {
-  if (passedIds.has(id)) { console.log(`SKIP  ${id} (déjà validé)`); return; }
+  if (passedIds.has(id)) {
+    console.log(`SKIP  ${id} (déjà validé)`);
+    return;
+  }
   try {
     await assertAlive();
     await fn();
@@ -64,7 +79,15 @@ async function waitFor(expr, label, timeoutMs = 90000) {
   while (Date.now() - start < timeoutMs) {
     if (!wsAlive) throw new Error("WS_CLOSED");
     const v = await ev(expr);
-    if (v && v !== "0" && !String(v).startsWith("ERR") && String(v) !== "false" && String(v) !== "undefined" && String(v) !== "null") return v;
+    if (
+      v &&
+      v !== "0" &&
+      !String(v).startsWith("ERR") &&
+      String(v) !== "false" &&
+      String(v) !== "undefined" &&
+      String(v) !== "null"
+    )
+      return v;
     await sleep(500);
   }
   console.log(`   [TIMEOUT] ${label}`);
@@ -74,8 +97,13 @@ async function waitAppReady(timeoutMs = 240000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     if (!wsAlive) throw new Error("WS_CLOSED");
-    const v = await ev(`!document.body.innerText.includes("Chargement de KAKO") && document.body.innerText.length > 200`);
-    if (v === true) { await sleep(600); return true; }
+    const v = await ev(
+      `!document.body.innerText.includes("Chargement de KAKO") && document.body.innerText.length > 200`,
+    );
+    if (v === true) {
+      await sleep(600);
+      return true;
+    }
     await sleep(1500);
   }
   console.log("   [TIMEOUT] boot app");
@@ -98,7 +126,10 @@ async function fullClick(sel, text) {
     el.dispatchEvent(new MouseEvent('click', o));
     return true;
   })()`);
-  if (ok === true) { await sleep(500); return true; }
+  if (ok === true) {
+    await sleep(500);
+    return true;
+  }
   return false;
 }
 async function jsClick(sel, text) {
@@ -110,7 +141,10 @@ async function jsClick(sel, text) {
     el.click();
     return true;
   })()`);
-  if (ok === true) { await sleep(500); return true; }
+  if (ok === true) {
+    await sleep(500);
+    return true;
+  }
   return false;
 }
 async function clickText(sel, text, untilJs, maxTries = 6) {
@@ -118,19 +152,34 @@ async function clickText(sel, text, untilJs, maxTries = 6) {
     await fullClick(sel, text);
     let ok = null;
     if (untilJs) ok = await ev(untilJs);
-    if (!untilJs || (ok && ok !== "false" && !String(ok).startsWith("ERR"))) { await sleep(400); return true; }
+    if (!untilJs || (ok && ok !== "false" && !String(ok).startsWith("ERR"))) {
+      await sleep(400);
+      return true;
+    }
     // repli : clic natif simple puis clic pointeur trusted
     await jsClick(sel, text);
     if (untilJs) {
       ok = await ev(untilJs);
-      if (ok && ok !== "false" && !String(ok).startsWith("ERR")) { await sleep(400); return true; }
-    } else { await sleep(400); return true; }
+      if (ok && ok !== "false" && !String(ok).startsWith("ERR")) {
+        await sleep(400);
+        return true;
+      }
+    } else {
+      await sleep(400);
+      return true;
+    }
     const pos = await centerOf(sel, text);
     if (pos) await rawClickAt(pos.x, pos.y);
     if (untilJs) {
       ok = await ev(untilJs);
-      if (ok && ok !== "false" && !String(ok).startsWith("ERR")) { await sleep(400); return true; }
-    } else { await sleep(400); return true; }
+      if (ok && ok !== "false" && !String(ok).startsWith("ERR")) {
+        await sleep(400);
+        return true;
+      }
+    } else {
+      await sleep(400);
+      return true;
+    }
     await sleep(600);
   }
   return false;
@@ -138,19 +187,63 @@ async function clickText(sel, text, untilJs, maxTries = 6) {
 async function rawClickAt(x, y) {
   await sleep(200);
   await send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
-  await send("Input.dispatchMouseEvent", { type: "mousePressed", x, y, button: "left", clickCount: 1 });
-  await send("Input.dispatchMouseEvent", { type: "mouseReleased", x, y, button: "left", clickCount: 1 });
+  await send("Input.dispatchMouseEvent", {
+    type: "mousePressed",
+    x,
+    y,
+    button: "left",
+    clickCount: 1,
+  });
+  await send("Input.dispatchMouseEvent", {
+    type: "mouseReleased",
+    x,
+    y,
+    button: "left",
+    clickCount: 1,
+  });
   await sleep(500);
 }
 async function key(keyName) {
-  const map = { Enter: 13, ArrowDown: 40, ArrowUp: 38, Escape: 27, "0": 48, "1": 49, "2": 50, "3": 51, "4": 52, "5": 53, "6": 54, "7": 55, "8": 56, "9": 57 };
+  const map = {
+    Enter: 13,
+    ArrowDown: 40,
+    ArrowUp: 38,
+    Escape: 27,
+    0: 48,
+    1: 49,
+    2: 50,
+    3: 51,
+    4: 52,
+    5: 53,
+    6: 54,
+    7: 55,
+    8: 56,
+    9: 57,
+  };
   const code = map[keyName] ?? 0;
   if (keyName.length === 1) {
-    await send("Input.dispatchKeyEvent", { type: "keyDown", key: keyName, text: keyName, unmodifiedText: keyName, windowsVirtualKeyCode: code, nativeVirtualKeyCode: code });
+    await send("Input.dispatchKeyEvent", {
+      type: "keyDown",
+      key: keyName,
+      text: keyName,
+      unmodifiedText: keyName,
+      windowsVirtualKeyCode: code,
+      nativeVirtualKeyCode: code,
+    });
   } else {
-    await send("Input.dispatchKeyEvent", { type: "rawKeyDown", key: keyName, windowsVirtualKeyCode: code, nativeVirtualKeyCode: code });
+    await send("Input.dispatchKeyEvent", {
+      type: "rawKeyDown",
+      key: keyName,
+      windowsVirtualKeyCode: code,
+      nativeVirtualKeyCode: code,
+    });
   }
-  await send("Input.dispatchKeyEvent", { type: "keyUp", key: keyName, windowsVirtualKeyCode: code, nativeVirtualKeyCode: code });
+  await send("Input.dispatchKeyEvent", {
+    type: "keyUp",
+    key: keyName,
+    windowsVirtualKeyCode: code,
+    nativeVirtualKeyCode: code,
+  });
   await sleep(250);
 }
 // Saisie d'une heure dans <input type="time"> via hook queue dispatch de NapDialog.
@@ -209,16 +302,40 @@ async function selectOption(triggerSel, optionText) {
   // Radix Select : les clics CDP et les événements synthétiques sont instables.
   // Approche fiable : accéder au handler React onValueChange via les fibers.
   const TEXT_TO_VALUE = {
-    "biberon":"biberon","petit-déjeuner":"petit-dejeuner","déjeuner":"dejeuner","goûter":"gouter","dîner":"diner",
-    "tout":"tout","moitié":"moitie","peu":"peu","refusé":"refuse",
-    "propre":"propre","urine":"urine","selles":"selles","mixte":"mixte",
-    "chute":"chute","morsure":"morsure","griffure":"griffure","pleurs":"pleurs","autre":"autre",
-    "mineur":"mineur","moyen":"moyen","important":"important",
-    "bonne":"bonne","agitée":"agitee","courte":"courte","longue":"longue",
-    "reposé":"repose","grognon":"grognon","normal":"normal",
+    biberon: "biberon",
+    "petit-déjeuner": "petit-dejeuner",
+    déjeuner: "dejeuner",
+    goûter: "gouter",
+    dîner: "diner",
+    tout: "tout",
+    moitié: "moitie",
+    peu: "peu",
+    refusé: "refuse",
+    propre: "propre",
+    urine: "urine",
+    selles: "selles",
+    mixte: "mixte",
+    chute: "chute",
+    morsure: "morsure",
+    griffure: "griffure",
+    pleurs: "pleurs",
+    autre: "autre",
+    mineur: "mineur",
+    moyen: "moyen",
+    important: "important",
+    bonne: "bonne",
+    agitée: "agitee",
+    courte: "courte",
+    longue: "longue",
+    reposé: "repose",
+    grognon: "grognon",
+    normal: "normal",
   };
   const val = TEXT_TO_VALUE[optionText.toLowerCase()];
-  if (!val) { console.log(`   [SELECT] valeur inconnue pour « ${optionText} »`); return false; }
+  if (!val) {
+    console.log(`   [SELECT] valeur inconnue pour « ${optionText} »`);
+    return false;
+  }
   const ok = await ev(`(() => {
     const trg = document.querySelector(${JSON.stringify(triggerSel)});
     if (!trg) return false;
@@ -236,14 +353,19 @@ async function selectOption(triggerSel, optionText) {
     }
     return false;
   })()`);
-  if (ok === true) { await sleep(400); return true; }
+  if (ok === true) {
+    await sleep(400);
+    return true;
+  }
   console.log(`   [SELECT] fiber fallback échoué pour ${triggerSel}="${optionText}"`);
   return false;
 }
 async function setInputValue(sel, value) {
   let el = null;
   for (let i = 0; i < 20 && !el; i++) {
-    el = await ev(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); return e ? e.tagName : null; })()`);
+    el = await ev(
+      `(() => { const e = document.querySelector(${JSON.stringify(sel)}); return e ? e.tagName : null; })()`,
+    );
     if (!el) await sleep(350);
   }
   if (!el) return false;
@@ -281,33 +403,62 @@ async function ensureFiche(childId) {
 // ---------- infrastructure ----------
 
 async function ensureDevServer() {
-  try { await fetch(BASE); return; } catch {}
+  try {
+    await fetch(BASE);
+    return;
+  } catch {}
   console.log("   [SETUP] démarrage du serveur de dev...");
-  spawn("cmd.exe", ["/c", "npm run dev"], { cwd: PROJECT, detached: true, stdio: "ignore" }).unref();
+  spawn("cmd.exe", ["/c", "npm run dev"], {
+    cwd: PROJECT,
+    detached: true,
+    stdio: "ignore",
+  }).unref();
   const deadline = Date.now() + 240000;
   while (Date.now() < deadline) {
     await sleep(3000);
-    try { const r = await fetch(BASE); if (r.ok) { console.log("   [SETUP] serveur de dev prêt."); return; } } catch {}
+    try {
+      const r = await fetch(BASE);
+      if (r.ok) {
+        console.log("   [SETUP] serveur de dev prêt.");
+        return;
+      }
+    } catch {}
   }
   throw new Error("Serveur de dev indisponible sur le port 8080");
 }
 
 async function ensureChrome() {
   for (let i = 0; i < 2; i++) {
-    try { await fetch("http://127.0.0.1:9223/json/version"); return; } catch {}
+    try {
+      await fetch("http://127.0.0.1:9223/json/version");
+      return;
+    } catch {}
     const exe = "C:/Program Files/Google/Chrome/Application/chrome.exe";
-    spawn(exe, [
-      "--remote-debugging-port=9223",
-      "--user-data-dir=C:/Users/ALFA/AppData/Local/Temp/opencode/chrome-profile-run",
-      "--no-first-run", "--no-default-browser-check", "--disable-gpu",
-      "--disable-extensions", "--disable-background-networking",
-      "--disable-component-update", "--disable-sync", "--metrics-recording-only",
-      "--window-size=1400,900", "about:blank",
-    ], { detached: true, stdio: "ignore" }).unref();
+    spawn(
+      exe,
+      [
+        "--remote-debugging-port=9223",
+        "--user-data-dir=C:/Users/ALFA/AppData/Local/Temp/opencode/chrome-profile-run",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-gpu",
+        "--disable-extensions",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync",
+        "--metrics-recording-only",
+        "--window-size=1400,900",
+        "about:blank",
+      ],
+      { detached: true, stdio: "ignore" },
+    ).unref();
     const deadline = Date.now() + 30000;
     while (Date.now() < deadline) {
       await sleep(1000);
-      try { await fetch("http://127.0.0.1:9223/json/version"); return; } catch {}
+      try {
+        await fetch("http://127.0.0.1:9223/json/version");
+        return;
+      } catch {}
     }
   }
   throw new Error("Chrome indisponible sur le port 9223");
@@ -320,14 +471,33 @@ async function connect() {
   if (!page) page = targets.find((x) => x.type === "page");
   if (!page) throw new Error("Aucun onglet CDP");
   ws = new WebSocket(page.webSocketDebuggerUrl);
-  await new Promise((r, j) => { ws.on("open", r); ws.on("error", j); });
+  await new Promise((r, j) => {
+    ws.on("open", r);
+    ws.on("error", j);
+  });
   ws.on("message", (d) => {
     const m = JSON.parse(d.toString());
-    if (m.id && pending.has(m.id)) { pending.get(m.id).resolve(m); pending.delete(m.id); }
+    if (m.id && pending.has(m.id)) {
+      pending.get(m.id).resolve(m);
+      pending.delete(m.id);
+    }
     if (m.method === "Runtime.exceptionThrown")
-      pageErrors.push("EXC: " + (m.params.exceptionDetails?.exception?.description || m.params.exceptionDetails?.text || "").slice(0, 300));
+      pageErrors.push(
+        "EXC: " +
+          (
+            m.params.exceptionDetails?.exception?.description ||
+            m.params.exceptionDetails?.text ||
+            ""
+          ).slice(0, 300),
+      );
     if (m.method === "Runtime.consoleAPICalled" && m.params.type === "error")
-      pageErrors.push("CONSOLE: " + (m.params.args || []).map(a => a.value ?? a.description ?? "").join(" ").slice(0, 250));
+      pageErrors.push(
+        "CONSOLE: " +
+          (m.params.args || [])
+            .map((a) => a.value ?? a.description ?? "")
+            .join(" ")
+            .slice(0, 250),
+      );
   });
   ws.on("close", (code) => {
     wsAlive = false;
@@ -339,7 +509,9 @@ async function connect() {
   await send("Runtime.enable");
   await send("Page.enable");
   clearInterval(keepAlive);
-  keepAlive = setInterval(() => { ev("1").catch(() => {}); }, 12000);
+  keepAlive = setInterval(() => {
+    ev("1").catch(() => {});
+  }, 12000);
 }
 
 let setupDone = false;
@@ -371,7 +543,9 @@ async function doSetup() {
   const todayAtt = (db.attendance ?? []).filter((a) => a.date === today);
   ctx.presentIds = todayAtt.filter((a) => a.status !== "absent").map((a) => a.childId);
   ctx.absentId = (todayAtt.find((a) => a.status === "absent") ?? {}).childId ?? "";
-  const coveredIds = new Set((db.dailyTransmissions ?? []).filter((tr) => tr.date === today).map((tr) => tr.childId));
+  const coveredIds = new Set(
+    (db.dailyTransmissions ?? []).filter((tr) => tr.date === today).map((tr) => tr.childId),
+  );
   const uncoveredPresent = ctx.presentIds.filter((id) => !coveredIds.has(id));
   ctx.scratch = uncoveredPresent[0] ?? ctx.presentIds[0];
   ctx.anyTarget = coveredIds.size > 0 ? [...coveredIds][0] : ctx.presentIds[0];
@@ -379,27 +553,47 @@ async function doSetup() {
 }
 
 const SECTIONS_JS = `(() => ["meals","naps","diaperChanges","activities","incidents","medications"].filter(k => !!document.querySelector('[data-testid="section-'+k+'"]')).length)()`;
-const trOf = (childId, date) => `(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); return JSON.stringify((db.dailyTransmissions ?? []).find(t => t.childId === "${childId}" && t.date === "${date}") ?? null); })()`;
-const mealsCountOf = (childId, date) => `(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); return ((db.dailyTransmissions ?? []).find(t => t.childId === "${childId}" && t.date === "${date}")?.meals ?? []).length; })()`;
+const trOf = (childId, date) =>
+  `(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); return JSON.stringify((db.dailyTransmissions ?? []).find(t => t.childId === "${childId}" && t.date === "${date}") ?? null); })()`;
+const mealsCountOf = (childId, date) =>
+  `(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); return ((db.dailyTransmissions ?? []).find(t => t.childId === "${childId}" && t.date === "${date}")?.meals ?? []).length; })()`;
 
 async function runTests() {
   const { today, presentIds, absentId, scratch, anyTarget } = ctx;
 
   await t("T01", "Page transmissions rendue : une carte par enfant accueilli", async () => {
     await goto("/transmissions");
-    await waitFor(`document.querySelectorAll('[data-testid^="transmission-card-"]').length > 0`, "cartes transmissions");
-    const listedCards = await ev(`document.querySelectorAll('[data-testid^="transmission-card-"]').length`);
-    report("T01", "Page transmissions rendue : une carte par enfant accueilli",
-      Number(listedCards) === presentIds.length, `cards=${listedCards} expected=${presentIds.length}`);
+    await waitFor(
+      `document.querySelectorAll('[data-testid^="transmission-card-"]').length > 0`,
+      "cartes transmissions",
+    );
+    const listedCards = await ev(
+      `document.querySelectorAll('[data-testid^="transmission-card-"]').length`,
+    );
+    report(
+      "T01",
+      "Page transmissions rendue : une carte par enfant accueilli",
+      Number(listedCards) === presentIds.length,
+      `cards=${listedCards} expected=${presentIds.length}`,
+    );
   });
 
   await t("T02", "Enfant absent du jour non listé", async () => {
-    const absentInDom = await ev(`document.querySelector('[data-testid="transmission-card-${absentId}"]') ? "yes" : "no"`);
-    report("T02", "Enfant absent du jour non listé", absentId !== "" && absentInDom === "no", `absent=${absentId}`);
+    const absentInDom = await ev(
+      `document.querySelector('[data-testid="transmission-card-${absentId}"]') ? "yes" : "no"`,
+    );
+    report(
+      "T02",
+      "Enfant absent du jour non listé",
+      absentId !== "" && absentInDom === "no",
+      `absent=${absentId}`,
+    );
   });
 
   await t("T03", "Mini-résumés issus du seed", async () => {
-    const summaryOk = await ev(`/\\d+ repas · \\d+ siestes?/.test(document.querySelector('[data-testid="mini-summary"]')?.textContent || "")`);
+    const summaryOk = await ev(
+      `/\\d+ repas · \\d+ siestes?/.test(document.querySelector('[data-testid="mini-summary"]')?.textContent || "")`,
+    );
     report("T03", "Mini-résumé « N repas · N siestes… » affiché", summaryOk === true);
   });
 
@@ -414,14 +608,23 @@ async function runTests() {
       return JSON.stringify({ expected, domCount });
     })()`);
     let s = {};
-    try { s = JSON.parse(incompleteStats); } catch {}
-    report("T04", "Indicateur « Incomplète » cohérent avec les données",
-      s.expected > 0 ? Number(s.domCount) === Number(s.expected) : true, incompleteStats);
+    try {
+      s = JSON.parse(incompleteStats);
+    } catch {}
+    report(
+      "T04",
+      "Indicateur « Incomplète » cohérent avec les données",
+      s.expected > 0 ? Number(s.domCount) === Number(s.expected) : true,
+      incompleteStats,
+    );
   });
 
   await t("T05", "Fiche transmission : 6 sections + état général", async () => {
     await goto("/transmissions");
-    await waitFor(`document.querySelectorAll('a[aria-label^="Ouvrir la transmission"]').length > 0`, "liens ouvrir");
+    await waitFor(
+      `document.querySelectorAll('a[aria-label^="Ouvrir la transmission"]').length > 0`,
+      "liens ouvrir",
+    );
     const opened = await clickText(
       'a[aria-label^="Ouvrir la transmission"]',
       "",
@@ -430,19 +633,35 @@ async function runTests() {
     await waitFor(`(${SECTIONS_JS}) === 6`, "sections visibles");
     const sectionsCount = Number(await ev(SECTIONS_JS));
     const generalVisible = await ev(`!!document.querySelector('[data-testid="general-state"]')`);
-    const sidebarCount = await ev(`document.querySelectorAll('nav[aria-label="Navigation principale"], aside').length`);
-    report("T05", "Fiche transmission : 6 sections + état général + 1 sidebar",
+    const sidebarCount = await ev(
+      `document.querySelectorAll('nav[aria-label="Navigation principale"], aside').length`,
+    );
+    report(
+      "T05",
+      "Fiche transmission : 6 sections + état général + 1 sidebar",
       opened && sectionsCount === 6 && generalVisible === true && sidebarCount <= 1,
-      `opened=${opened} sections=${sectionsCount} sidebars=${sidebarCount}`);
+      `opened=${opened} sections=${sectionsCount} sidebars=${sidebarCount}`,
+    );
   });
 
   await t("T06", "Création transmission depuis scratch (ouverture du cahier)", async () => {
     await goto(`/transmissions/${scratch}`);
     await waitFor(trOf(scratch, today), "création auto transmission", 60000);
-    await waitFor(`!!document.querySelector('[data-testid="general-state"]')`, "état général scratch");
+    await waitFor(
+      `!!document.querySelector('[data-testid="general-state"]')`,
+      "état général scratch",
+    );
     const raw = await ev(trOf(scratch, today));
-    let tr = null; try { tr = JSON.parse(raw); } catch {}
-    report("T06", "Création transmission depuis scratch (ouverture du cahier)", Boolean(tr?.id), tr?.id ?? raw);
+    let tr = null;
+    try {
+      tr = JSON.parse(raw);
+    } catch {}
+    report(
+      "T06",
+      "Création transmission depuis scratch (ouverture du cahier)",
+      Boolean(tr?.id),
+      tr?.id ?? raw,
+    );
   });
 
   await t("T07", "État général enregistré et persisté après reload", async () => {
@@ -450,8 +669,11 @@ async function runTests() {
     await clickSelector('[data-testid="mood-excellent"]');
     await setInputValue("#general-temperature", "37.5");
     await setInputValue("#general-notes", "Journée très joyeuse, beaucoup joué dehors.", true);
-    await clickText('[data-testid="general-state"] button[type="submit"]', "Enregistrer l'état général",
-      `[...document.querySelectorAll('[data-sonner-toast]')].some(t => t.textContent.includes("État général enregistré"))`);
+    await clickText(
+      '[data-testid="general-state"] button[type="submit"]',
+      "Enregistrer l'état général",
+      `[...document.querySelectorAll('[data-sonner-toast]')].some(t => t.textContent.includes("État général enregistré"))`,
+    );
     await sleep(800);
     await goto(`/transmissions/${scratch}`);
     await waitFor(`!!document.querySelector('[data-testid="general-state"]')`, "reload fiche");
@@ -460,53 +682,97 @@ async function runTests() {
       const t = (db.dailyTransmissions ?? []).find(t => t.childId === "${scratch}" && t.date === "${today}");
       return JSON.stringify({ mood: t?.mood, temp: t?.temperature, uiTemp: document.querySelector("#general-temperature")?.value, notes: t?.generalNotes?.slice(0, 12) });
     })()`);
-    let s = {}; try { s = JSON.parse(g); } catch {}
-    report("T07", "État général enregistré et persisté après reload",
-      s.mood === "excellent" && Number(s.temp) === 37.5 && s.notes === "Journée très", g);
+    let s = {};
+    try {
+      s = JSON.parse(g);
+    } catch {}
+    report(
+      "T07",
+      "État général enregistré et persisté après reload",
+      s.mood === "excellent" && Number(s.temp) === 37.5 && s.notes === "Journée très",
+      g,
+    );
   });
 
   await t("T08", "Ajout d'un repas persisté + visible dans la section", async () => {
     await ensureFiche(scratch);
     const before = Number(await ev(mealsCountOf(scratch, today)));
-    await clickText('[data-testid="section-meals"] button', "Ajouter un repas",
-      `document.querySelector('[role="dialog"]')?.innerText.includes("Ajouter un repas")`);
+    await clickText(
+      '[data-testid="section-meals"] button',
+      "Ajouter un repas",
+      `document.querySelector('[role="dialog"]')?.innerText.includes("Ajouter un repas")`,
+    );
     await sleep(400);
     await selectOption("#meal-type", "Déjeuner");
     await selectOption("#meal-quantity", "Tout");
     await setInputValue("#meal-description", "Purée de carottes et poulet maison");
-    await clickText('[role="dialog"] button[type="submit"]', "Ajouter le repas",
-      `[...document.querySelectorAll('[data-sonner-toast]')].some(t => t.textContent.includes("Repas ajouté"))`);
+    await clickText(
+      '[role="dialog"] button[type="submit"]',
+      "Ajouter le repas",
+      `[...document.querySelectorAll('[data-sonner-toast]')].some(t => t.textContent.includes("Repas ajouté"))`,
+    );
     await sleep(800);
     const after = Number(await ev(mealsCountOf(scratch, today)));
-    const shown = await ev(`/Purée de carottes/.test(document.querySelector('[data-testid="section-meals"]')?.textContent || "")`);
-    report("T08", "Ajout d'un repas persisté + visible dans la section",
-      Number.isFinite(before) && after === before + 1 && shown === true, `before=${before} after=${after}`);
+    const shown = await ev(
+      `/Purée de carottes/.test(document.querySelector('[data-testid="section-meals"]')?.textContent || "")`,
+    );
+    report(
+      "T08",
+      "Ajout d'un repas persisté + visible dans la section",
+      Number.isFinite(before) && after === before + 1 && shown === true,
+      `before=${before} after=${after}`,
+    );
   });
 
   await t("T09", "Biberon : ml obligatoire puis enregistrement correct", async () => {
     await ensureFiche(scratch);
-    await clickText('[data-testid="section-meals"] button', "Ajouter un repas",
-      `document.querySelector('[role="dialog"]')?.innerText.includes("Ajouter un repas")`);
+    await clickText(
+      '[data-testid="section-meals"] button',
+      "Ajouter un repas",
+      `document.querySelector('[role="dialog"]')?.innerText.includes("Ajouter un repas")`,
+    );
     await sleep(400);
     await selectOption("#meal-type", "Biberon");
-    const mlField = await ev(`(() => JSON.stringify({ mlPresent: !!document.querySelector("#meal-ml"), trigTxt: document.querySelector("#meal-type")?.textContent.trim().slice(0, 14) }))()`);
-    await clickText('[role="dialog"] button[type="submit"]', "Ajouter le repas",
-      `!!document.querySelector('[role="dialog"] [role="alert"]')`);
-    const mlError = (await ev(`document.querySelector('[role="dialog"] [role="alert"]')?.textContent || ""`)) || "";
+    const mlField = await ev(
+      `(() => JSON.stringify({ mlPresent: !!document.querySelector("#meal-ml"), trigTxt: document.querySelector("#meal-type")?.textContent.trim().slice(0, 14) }))()`,
+    );
+    await clickText(
+      '[role="dialog"] button[type="submit"]',
+      "Ajouter le repas",
+      `!!document.querySelector('[role="dialog"] [role="alert"]')`,
+    );
+    const mlError =
+      (await ev(`document.querySelector('[role="dialog"] [role="alert"]')?.textContent || ""`)) ||
+      "";
     await setInputValue("#meal-ml", "150");
-    await clickText('[role="dialog"] button[type="submit"]', "Ajouter le repas",
-      `[...document.querySelectorAll('[data-sonner-toast]')].some(t => t.textContent.includes("Repas ajouté"))`);
+    await clickText(
+      '[role="dialog"] button[type="submit"]',
+      "Ajouter le repas",
+      `[...document.querySelectorAll('[data-sonner-toast]')].some(t => t.textContent.includes("Repas ajouté"))`,
+    );
     await sleep(800);
-    const raw = await ev(`(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); const t = (db.dailyTransmissions ?? []).find(t => t.childId === "${scratch}" && t.date === "${today}"); const b = (t?.meals ?? []).find(m => m.type === "biberon"); return JSON.stringify({ ml: b?.quantityMl }); })()`);
-    let s = {}; try { s = JSON.parse(raw); } catch {}
-    report("T09", "Biberon : ml obligatoire puis enregistrement correct",
-      mlError.toLowerCase().includes("ml") && Number(s.ml) === 150, `${mlField ?? ""} err="${mlError.slice(0, 50)}" ml=${s.ml}`);
+    const raw = await ev(
+      `(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); const t = (db.dailyTransmissions ?? []).find(t => t.childId === "${scratch}" && t.date === "${today}"); const b = (t?.meals ?? []).find(m => m.type === "biberon"); return JSON.stringify({ ml: b?.quantityMl }); })()`,
+    );
+    let s = {};
+    try {
+      s = JSON.parse(raw);
+    } catch {}
+    report(
+      "T09",
+      "Biberon : ml obligatoire puis enregistrement correct",
+      mlError.toLowerCase().includes("ml") && Number(s.ml) === 150,
+      `${mlField ?? ""} err="${mlError.slice(0, 50)}" ml=${s.ml}`,
+    );
   });
 
   await t("T10", "Sieste : durée calculée automatiquement (90 min = 1h30)", async () => {
     await ensureFiche(scratch);
-    await clickText('[data-testid="section-naps"] button', "Ajouter une sieste",
-      `document.querySelector('[role="dialog"]')?.innerText.includes("sieste")`);
+    await clickText(
+      '[data-testid="section-naps"] button',
+      "Ajouter une sieste",
+      `document.querySelector('[role="dialog"]')?.innerText.includes("sieste")`,
+    );
     await sleep(400);
 
     // Injecter directement la sieste dans le DB (React19 ne traite pas les dispatch
@@ -525,7 +791,9 @@ async function runTests() {
     await sleep(200);
 
     // Fermer le dialog
-    await ev(`document.querySelector('[role="dialog"] button[aria-label="Close"]')?.click() || document.querySelector('[role="dialog"] button[data-state="closed"]')?.click() || true`);
+    await ev(
+      `document.querySelector('[role="dialog"] button[aria-label="Close"]')?.click() || document.querySelector('[role="dialog"] button[data-state="closed"]')?.click() || true`,
+    );
     await sleep(200);
     await ev(`document.querySelector('[role="dialog"]')?.remove()`);
     await sleep(300);
@@ -540,85 +808,176 @@ async function runTests() {
     await ensureFiche(scratch);
 
     // Vérifier que "1h30" apparaît dans la section siestes
-    const shown = await ev(`document.querySelector('[data-testid="section-naps"]')?.textContent.includes("1h30")`);
-    const napText = await ev(`document.querySelector('[data-testid="section-naps"]')?.textContent?.slice(0, 200) || ""`);
+    const shown = await ev(
+      `document.querySelector('[data-testid="section-naps"]')?.textContent.includes("1h30")`,
+    );
+    const napText = await ev(
+      `document.querySelector('[data-testid="section-naps"]')?.textContent?.slice(0, 200) || ""`,
+    );
     console.log(`   [T10] shown=${shown} napText="${napText.slice(0, 100)}"`);
 
     // Aussi vérifier que le DB contient bien durationMinutes=90
-    const durCheck = await ev(`(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); const t = (db.dailyTransmissions ?? []).find(t => t.childId === "${scratch}"); const n = (t?.naps ?? []).find(n => n.durationMinutes === 90); return !!n; })()`);
+    const durCheck = await ev(
+      `(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); const t = (db.dailyTransmissions ?? []).find(t => t.childId === "${scratch}"); const n = (t?.naps ?? []).find(n => n.durationMinutes === 90); return !!n; })()`,
+    );
 
-    report("T10", "Sieste : durée calculée automatiquement (90 min = 1h30)",
+    report(
+      "T10",
+      "Sieste : durée calculée automatiquement (90 min = 1h30)",
       shown === true || durCheck === true,
-      `shown=${shown} durCheck=${durCheck}`);
+      `shown=${shown} durCheck=${durCheck}`,
+    );
   });
 
   await t("T11", "Change avec irritation + produit consigné", async () => {
     await ensureFiche(scratch);
-    await clickText('[data-testid="section-diaperChanges"] button', "Ajouter un change",
-      `document.querySelector('[role="dialog"]')?.innerText.includes("change")`);
+    await clickText(
+      '[data-testid="section-diaperChanges"] button',
+      "Ajouter un change",
+      `document.querySelector('[role="dialog"]')?.innerText.includes("change")`,
+    );
     await sleep(400);
     await selectOption("#change-type", "Selles");
     await clickSelector('label[for="change-irritation"]');
     await sleep(300);
     await setInputValue("#change-product", "Crème Bepanthen");
-    await clickText('[role="dialog"] button[type="submit"]', "Ajouter le change",
-      `[...document.querySelectorAll('[data-sonner-toast]')].some(t => t.textContent.includes("Change ajouté"))`);
+    await clickText(
+      '[role="dialog"] button[type="submit"]',
+      "Ajouter le change",
+      `[...document.querySelectorAll('[data-sonner-toast]')].some(t => t.textContent.includes("Change ajouté"))`,
+    );
     await sleep(800);
-    const raw = await ev(`(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); const t = (db.dailyTransmissions ?? []).find(t => t.childId === "${scratch}" && t.date === "${today}"); const c = (t?.diaperChanges ?? []).find(c => c.irritation); return JSON.stringify({ irr: !!c, prod: c?.productUsed }); })()`);
-    let s = {}; try { s = JSON.parse(raw); } catch {}
-    report("T11", "Change avec irritation + produit consigné", s.irr === true && s.prod === "Crème Bepanthen", raw);
+    const raw = await ev(
+      `(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); const t = (db.dailyTransmissions ?? []).find(t => t.childId === "${scratch}" && t.date === "${today}"); const c = (t?.diaperChanges ?? []).find(c => c.irritation); return JSON.stringify({ irr: !!c, prod: c?.productUsed }); })()`,
+    );
+    let s = {};
+    try {
+      s = JSON.parse(raw);
+    } catch {}
+    report(
+      "T11",
+      "Change avec irritation + produit consigné",
+      s.irr === true && s.prod === "Crème Bepanthen",
+      raw,
+    );
   });
 
   await t("T12", "Activité ajoutée avec catégorie et compétences", async () => {
     await ensureFiche(scratch);
-    await clickText('[data-testid="section-activities"] button', "Ajouter une activité",
-      `document.querySelector('[role="dialog"]')?.innerText.includes("activité")`);
+    await clickText(
+      '[data-testid="section-activities"] button',
+      "Ajouter une activité",
+      `document.querySelector('[role="dialog"]')?.innerText.includes("activité")`,
+    );
     await sleep(400);
     await setInputValue("#activity-name", "Atelier comptines");
     await setInputValue("#activity-category", "Éveil musical");
     await setInputValue("#activity-skills", "vocabulaire, rythme");
-    await clickText('[role="dialog"] button[type="submit"]', "Ajouter l'activité",
-      `[...document.querySelectorAll('[data-sonner-toast]')].some(t => t.textContent.includes("Activité ajoutée"))`);
+    await clickText(
+      '[role="dialog"] button[type="submit"]',
+      "Ajouter l'activité",
+      `[...document.querySelectorAll('[data-sonner-toast]')].some(t => t.textContent.includes("Activité ajoutée"))`,
+    );
     await sleep(800);
-    const raw = await ev(`(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); const t = (db.dailyTransmissions ?? []).find(t => t.childId === "${scratch}" && t.date === "${today}"); const a = (t?.activities ?? []).find(a => a.name === "Atelier comptines"); return JSON.stringify({ cat: a?.category, skills: a?.skillsObserved?.length }); })()`);
-    let s = {}; try { s = JSON.parse(raw); } catch {}
-    report("T12", "Activité ajoutée avec catégorie et compétences",
-      s.cat === "Éveil musical" && Number(s.skills) === 2, raw);
+    const raw = await ev(
+      `(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); const t = (db.dailyTransmissions ?? []).find(t => t.childId === "${scratch}" && t.date === "${today}"); const a = (t?.activities ?? []).find(a => a.name === "Atelier comptines"); return JSON.stringify({ cat: a?.category, skills: a?.skillsObserved?.length }); })()`,
+    );
+    let s = {};
+    try {
+      s = JSON.parse(raw);
+    } catch {}
+    report(
+      "T12",
+      "Activité ajoutée avec catégorie et compétences",
+      s.cat === "Éveil musical" && Number(s.skills) === 2,
+      raw,
+    );
   });
 
-  await t("T13", "Incident important : validation parents + toast d'alerte spécifique", async () => {
-    await ensureFiche(scratch);
-    await clickText('[data-testid="section-incidents"] button', "Signaler un incident",
-      `document.querySelector('[role="dialog"]')?.innerText.includes("incident")`);
-    await sleep(400);
-    await setInputValue("#incident-description", "Chute avec bosse au front pendant le jeu extérieur.");
-    const descSet = Number(await ev(`(document.querySelector("#incident-description")?.value || "").length`));
-    await selectOption("#incident-severity", "Important");
-    const preSub = await ev(`(() => JSON.stringify({ dlg: !!document.querySelector('[role="dialog"]'), descLen: (document.querySelector("#incident-description")?.value || "").length, sev: document.querySelector("#incident-severity")?.textContent.trim().slice(0, 12) }))()`);
-    await clickText('[role="dialog"] button[type="submit"]', "Signaler l'incident",
-      `!!document.querySelector('[role="dialog"] [role="alert"]')`);
-    const incError = (await ev(`document.querySelector('[role="dialog"] [role="alert"]')?.textContent || ""`)) || "";
-    await clickSelector('label[for="incident-parents"]');
-    await sleep(300);
-    await clickText('[role="dialog"] button[type="submit"]', "Signaler l'incident",
-      `[...document.querySelectorAll('[data-sonner-toast]')].some(t => t.textContent.includes("Incident important signalé"))`);
-    const warnToast = await ev(`[...document.querySelectorAll('[data-sonner-toast]')].some(t => t.textContent.includes("Incident important signalé"))`);
-    await sleep(900);
-    const raw = await ev(`(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); const t = (db.dailyTransmissions ?? []).find(t => t.childId === "${scratch}" && t.date === "${today}"); const i = (t?.incidents ?? []).find(i => i.severity === "important"); return JSON.stringify({ found: !!i, notified: i?.parentsNotified }); })()`);
-    let s = {}; try { s = JSON.parse(raw); } catch {}
-    report("T13", "Incident important : validation parents + toast d'alerte spécifique",
-      incError.toLowerCase().includes("parents") && warnToast === true && s.found === true && s.notified === true,
-      `descSet=${descSet} pre=${preSub ?? "?"} err="${incError.slice(0, 40)}" warn=${warnToast} notified=${s.notified}`);
-  });
+  await t(
+    "T13",
+    "Incident important : validation parents + toast d'alerte spécifique",
+    async () => {
+      await ensureFiche(scratch);
+      await clickText(
+        '[data-testid="section-incidents"] button',
+        "Signaler un incident",
+        `document.querySelector('[role="dialog"]')?.innerText.includes("incident")`,
+      );
+      await sleep(400);
+      await setInputValue(
+        "#incident-description",
+        "Chute avec bosse au front pendant le jeu extérieur.",
+      );
+      const descSet = Number(
+        await ev(`(document.querySelector("#incident-description")?.value || "").length`),
+      );
+      await selectOption("#incident-severity", "Important");
+      const preSub = await ev(
+        `(() => JSON.stringify({ dlg: !!document.querySelector('[role="dialog"]'), descLen: (document.querySelector("#incident-description")?.value || "").length, sev: document.querySelector("#incident-severity")?.textContent.trim().slice(0, 12) }))()`,
+      );
+      await clickText(
+        '[role="dialog"] button[type="submit"]',
+        "Signaler l'incident",
+        `!!document.querySelector('[role="dialog"] [role="alert"]')`,
+      );
+      const incError =
+        (await ev(`document.querySelector('[role="dialog"] [role="alert"]')?.textContent || ""`)) ||
+        "";
+      await clickSelector('label[for="incident-parents"]');
+      await sleep(300);
+      await clickText(
+        '[role="dialog"] button[type="submit"]',
+        "Signaler l'incident",
+        `[...document.querySelectorAll('[data-sonner-toast]')].some(t => t.textContent.includes("Incident important signalé"))`,
+      );
+      const warnToast = await ev(
+        `[...document.querySelectorAll('[data-sonner-toast]')].some(t => t.textContent.includes("Incident important signalé"))`,
+      );
+      await sleep(900);
+      const raw = await ev(
+        `(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); const t = (db.dailyTransmissions ?? []).find(t => t.childId === "${scratch}" && t.date === "${today}"); const i = (t?.incidents ?? []).find(i => i.severity === "important"); return JSON.stringify({ found: !!i, notified: i?.parentsNotified }); })()`,
+      );
+      let s = {};
+      try {
+        s = JSON.parse(raw);
+      } catch {}
+      report(
+        "T13",
+        "Incident important : validation parents + toast d'alerte spécifique",
+        incError.toLowerCase().includes("parents") &&
+          warnToast === true &&
+          s.found === true &&
+          s.notified === true,
+        `descSet=${descSet} pre=${preSub ?? "?"} err="${incError.slice(0, 40)}" warn=${warnToast} notified=${s.notified}`,
+      );
+    },
+  );
 
   await t("T14", "Suppression d'un repas reflétée dans les données", async () => {
     await ensureFiche(scratch);
     const before = Number(await ev(mealsCountOf(scratch, today)));
-    if (!(Number.isFinite(before) && before >= 1)) { report("T14", "Suppression d'un repas reflétée dans les données", false, `repas indisponibles (${before})`); return; }
+    if (!(Number.isFinite(before) && before >= 1)) {
+      report(
+        "T14",
+        "Suppression d'un repas reflétée dans les données",
+        false,
+        `repas indisponibles (${before})`,
+      );
+      return;
+    }
     await clickSelector('[data-testid="section-meals"] button[aria-label^="Supprimer"]');
-    await waitFor(`(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); return ((db.dailyTransmissions ?? []).find(t => t.childId === "${scratch}" && t.date === "${today}")?.meals ?? []).length === ${before - 1}; })()`, "suppression repas");
+    await waitFor(
+      `(() => { const db = JSON.parse(localStorage.getItem("kako.db.v1")); return ((db.dailyTransmissions ?? []).find(t => t.childId === "${scratch}" && t.date === "${today}")?.meals ?? []).length === ${before - 1}; })()`,
+      "suppression repas",
+    );
     const after = Number(await ev(mealsCountOf(scratch, today)));
-    report("T14", "Suppression d'un repas reflétée dans les données", after === before - 1, `before=${before} after=${after}`);
+    report(
+      "T14",
+      "Suppression d'un repas reflétée dans les données",
+      after === before - 1,
+      `before=${before} after=${after}`,
+    );
   });
 
   await t("T15", "Résumé imprimable : nom, humeur, signatures présents", async () => {
@@ -634,24 +993,43 @@ async function runTests() {
         hasSignatures: area.textContent.includes("Signature éducateur"),
       });
     })()`);
-    let s = {}; try { s = JSON.parse(info); } catch {}
-    report("T15", "Résumé imprimable : nom, humeur, signatures présents",
-      s.hasName && s.hasMood && s.hasSignatures === true, info ?? "pas de .print-area");
+    let s = {};
+    try {
+      s = JSON.parse(info);
+    } catch {}
+    report(
+      "T15",
+      "Résumé imprimable : nom, humeur, signatures présents",
+      s.hasName && s.hasMood && s.hasSignatures === true,
+      info ?? "pas de .print-area",
+    );
   });
 
-  await t("T16", "CSS impression : sidebar/actions masquées, zone résumé seule visible", async () => {
-    await ensureFiche(scratch);
-    let printApplied = false;
-    try {
-      await send("Emulation.setEmulatedMediaType", { media: "print" });
-      await sleep(400);
-      printApplied = await ev(`getComputedStyle(document.querySelector('.no-print')).display === 'none' && getComputedStyle(document.querySelector('.print-area')).position === 'absolute'`);
-      await send("Emulation.setEmulatedMediaType", { media: "screen" });
-    } catch {
-      printApplied = await ev(`[...document.styleSheets].some(s => { try { return [...s.cssRules].some(r => r.media && r.media.mediaText.includes('print')); } catch { return false; } })`);
-    }
-    report("T16", "CSS impression : sidebar/actions masquées, zone résumé seule visible", printApplied === true);
-  });
+  await t(
+    "T16",
+    "CSS impression : sidebar/actions masquées, zone résumé seule visible",
+    async () => {
+      await ensureFiche(scratch);
+      let printApplied = false;
+      try {
+        await send("Emulation.setEmulatedMediaType", { media: "print" });
+        await sleep(400);
+        printApplied = await ev(
+          `getComputedStyle(document.querySelector('.no-print')).display === 'none' && getComputedStyle(document.querySelector('.print-area')).position === 'absolute'`,
+        );
+        await send("Emulation.setEmulatedMediaType", { media: "screen" });
+      } catch {
+        printApplied = await ev(
+          `[...document.styleSheets].some(s => { try { return [...s.cssRules].some(r => r.media && r.media.mediaText.includes('print')); } catch { return false; } })`,
+        );
+      }
+      report(
+        "T16",
+        "CSS impression : sidebar/actions masquées, zone résumé seule visible",
+        printApplied === true,
+      );
+    },
+  );
 
   await t("T17", "Enfant absent ce jour : aucune transmission possible", async () => {
     await goto(`/transmissions/${absentId}`);
@@ -661,34 +1039,61 @@ async function runTests() {
       form: !!document.querySelector('[data-testid="general-state"]'),
       sections: (${SECTIONS_JS}),
     })`);
-    let s = {}; try { s = JSON.parse(guardOk); } catch {}
-    report("T17", "Enfant absent ce jour : aucune transmission possible",
-      s.guard === true && s.form === false && s.sections === 0, guardOk);
+    let s = {};
+    try {
+      s = JSON.parse(guardOk);
+    } catch {}
+    report(
+      "T17",
+      "Enfant absent ce jour : aucune transmission possible",
+      s.guard === true && s.form === false && s.sections === 0,
+      guardOk,
+    );
   });
 
   await t("T18", "Onglet Transmissions de l'enfant : historique + lien ouvert", async () => {
     await goto(`/enfants/${anyTarget}`);
     await waitFor(`document.body.innerText.includes("Informations générales")`, "fiche enfant");
-    const tabClicked = await clickText('[role="tab"]', "Transmissions",
-      `!!document.querySelector('[data-testid="child-transmission-summary"]') || document.body.innerText.includes("Aucune transmission")`);
-    const rows = Number(await ev(`document.querySelectorAll('[data-testid="child-transmission-summary"]').length`));
+    const tabClicked = await clickText(
+      '[role="tab"]',
+      "Transmissions",
+      `!!document.querySelector('[data-testid="child-transmission-summary"]') || document.body.innerText.includes("Aucune transmission")`,
+    );
+    const rows = Number(
+      await ev(`document.querySelectorAll('[data-testid="child-transmission-summary"]').length`),
+    );
     let tabOpened = false;
     if (rows > 0) {
-      tabOpened = await clickText('a[aria-label^="Ouvrir la transmission"]', "Ouvrir", `location.pathname.startsWith("/transmissions/")`);
+      tabOpened = await clickText(
+        'a[aria-label^="Ouvrir la transmission"]',
+        "Ouvrir",
+        `location.pathname.startsWith("/transmissions/")`,
+      );
     }
     const diag = await ev(`JSON.stringify({
       tabs: [...document.querySelectorAll('[role="tab"]')].map(t => t.getAttribute('aria-selected') + ':' + t.textContent.trim()).slice(0, 6),
       empty: document.body.innerText.includes("Aucune transmission"),
     })`);
-    report("T18", "Onglet Transmissions de l'enfant : historique + lien ouvert",
-      rows >= 1 && tabOpened, `clicked=${tabClicked} rows=${rows} ${diag}`);
+    report(
+      "T18",
+      "Onglet Transmissions de l'enfant : historique + lien ouvert",
+      rows >= 1 && tabOpened,
+      `clicked=${tabClicked} rows=${rows} ${diag}`,
+    );
   });
 
   await t("T19", "Cartes présence : lien vers la transmission", async () => {
     await goto("/presences");
     await waitFor(`document.querySelectorAll('li[data-status]').length > 0`, "liste présence");
-    const links = Number(await ev(`document.querySelectorAll('[data-testid="card-transmission-link"]').length`));
-    report("T19", "Cartes présence : lien vers la transmission pour les enfants pointés", links > 0, `links=${links}`);
+    const links = Number(
+      await ev(`document.querySelectorAll('[data-testid="card-transmission-link"]').length`),
+    );
+    report(
+      "T19",
+      "Cartes présence : lien vers la transmission pour les enfants pointés",
+      links > 0,
+      `links=${links}`,
+    );
   });
 
   await t("T20", "Sidebar : Transmissions positionnée juste après Présences", async () => {
@@ -697,14 +1102,25 @@ async function runTests() {
       const f = labels.indexOf("Familles"), p = labels.indexOf("Présences"), tr = labels.indexOf("Transmissions");
       return JSON.stringify({ f, p, tr });
     })()`);
-    let s = {}; try { s = JSON.parse(order); } catch {}
-    report("T20", "Sidebar : Transmissions positionnée juste après Présences",
-      s.p > 0 && s.tr === s.p + 1, order);
+    let s = {};
+    try {
+      s = JSON.parse(order);
+    } catch {}
+    report(
+      "T20",
+      "Sidebar : Transmissions positionnée juste après Présences",
+      s.p > 0 && s.tr === s.p + 1,
+      order,
+    );
   });
 
   await t("T21", "Aucune erreur JS/console sur tout le parcours", async () => {
-    report("T21", "Aucune erreur JS/console sur tout le parcours", pageErrors.length === 0,
-      `errors=${pageErrors.length}${pageErrors.length ? " → " + pageErrors[0] : ""}`);
+    report(
+      "T21",
+      "Aucune erreur JS/console sur tout le parcours",
+      pageErrors.length === 0,
+      `errors=${pageErrors.length}${pageErrors.length ? " → " + pageErrors[0] : ""}`,
+    );
   });
 }
 
@@ -732,16 +1148,23 @@ async function main() {
       }
     } finally {
       clearInterval(keepAlive);
-      try { ws?.close(); } catch {}
+      try {
+        ws?.close();
+      } catch {}
       wsAlive = false;
       await sleep(1500);
     }
   }
   const passed = results.filter((r) => r.pass).length;
-  console.log(`\n=== RESULTAT : ${passed}/${results.length} évalués, ${passedIds.size}/21 PASS au total ===`);
+  console.log(
+    `\n=== RESULTAT : ${passed}/${results.length} évalués, ${passedIds.size}/21 PASS au total ===`,
+  );
   if (passedIds.size < 21) process.exitCode = 1;
 }
 
 main()
-  .catch((e) => { console.error("FATAL:", e); process.exitCode = 1; })
+  .catch((e) => {
+    console.error("FATAL:", e);
+    process.exitCode = 1;
+  })
   .finally(() => setTimeout(() => process.exit(process.exitCode ?? 0), 300));
