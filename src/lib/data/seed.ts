@@ -2,6 +2,7 @@ import type { Database } from "./types";
 import { deriveFamiliesFromDatabase } from "../business/families";
 import type { AuthorizedPerson } from "../models/authorized-person";
 import type { AttendanceRecord } from "../models/attendance";
+import type { ChildSchedule, ScheduleException } from "../models/child-schedule";
 import type {
   ActivityRecord,
   DailyTransmission,
@@ -614,6 +615,78 @@ export async function buildSeedDatabase(): Promise<Database> {
     isDemo: true,
   }));
 
+  // ---- Planning enfants (phase 8A) : rythmes hebdomadaires + exceptions.
+  // ~90 % des enfants inscrits ont un planning ; les créneaux varient selon
+  // la section (puériculture vs grands) pour obtenir des jauges réalistes.
+  const childSchedules: ChildSchedule[] = [];
+  const scheduleExceptions: ScheduleException[] = [];
+  let schSeq = 1;
+  let excSeq = 1;
+  const WEEK_DAYS = [1, 2, 3, 4, 5, 6]; // lun..sam (dim = 0 exclu du défaut)
+  for (let idx = 0; idx < children.length; idx++) {
+    const child = children[idx]!;
+    if (child.status !== "Inscrit") continue;
+    // ~90 % couverture, le reste (10 %) volontairement sans planning.
+    if (idx % 10 === 9) continue;
+    const sectionIdx = child.sectionId === "sec-003" ? 2 : child.sectionId === "sec-002" ? 1 : 0;
+    const startPool = sectionIdx === 0 ? ["07:30", "08:00"] : ["08:00", "08:30"];
+    const endPool = sectionIdx === 0 ? ["17:00", "18:00"] : ["16:00", "17:00"];
+    const days = [...WEEK_DAYS];
+    // ~1 enfant sur 4 absent le mercredi après-midi (semaine allégée).
+    if (idx % 4 === 0) days.splice(2, 1);
+    const now = new Date().toISOString();
+    const schedule: ChildSchedule = {
+      id: uid("sch", schSeq++),
+      childId: child.id,
+      days,
+      startTime: startPool[idx % startPool.length]!,
+      endTime: endPool[idx % endPool.length]!,
+      createdAt: now,
+      updatedAt: now,
+      isDemo: true,
+    };
+    if (idx % 6 === 0) schedule.notes = "A déjeuner sur place";
+    childSchedules.push(schedule);
+    // Quelques exceptions ponctuelles (départs anticipés / absences / activités).
+    if (idx % 10 === 0) {
+      scheduleExceptions.push({
+        id: uid("exc", excSeq++),
+        childId: child.id,
+        date: daysAgo(2),
+        type: "depart-avance",
+        endTime: "14:30",
+        reason: "Rendez-vous médical",
+        createdAt: now,
+        updatedAt: now,
+        isDemo: true,
+      });
+    } else if (idx % 9 === 0) {
+      scheduleExceptions.push({
+        id: uid("exc", excSeq++),
+        childId: child.id,
+        date: inDays(3),
+        type: "absence",
+        reason: "Vacances familiales",
+        createdAt: now,
+        updatedAt: now,
+        isDemo: true,
+      });
+    } else if (idx % 8 === 0) {
+      scheduleExceptions.push({
+        id: uid("exc", excSeq++),
+        childId: child.id,
+        date: daysAgo(1),
+        type: "activite",
+        startTime: "09:00",
+        endTime: "16:00",
+        reason: "Sortie au parc",
+        createdAt: now,
+        updatedAt: now,
+        isDemo: true,
+      });
+    }
+  }
+
   const base: Database = {
     version: 1,
     establishment: {
@@ -636,6 +709,8 @@ export async function buildSeedDatabase(): Promise<Database> {
     authorizedPersons: [],
     attendance,
     dailyTransmissions,
+    childSchedules,
+    scheduleExceptions,
     employees,
     invoices,
     payments,

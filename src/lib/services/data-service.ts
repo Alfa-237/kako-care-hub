@@ -2,11 +2,13 @@
 // L'implémentation actuelle est localStorage ; le passage à SQLite/IndexedDB
 // (application Windows offline-first) se fera sans toucher aux composants.
 import type { Child, Parent } from "../data/types";
+import type { Section } from "../data/types";
 import type { CollectionKey } from "../data/types";
 import type { FamilyRecord } from "../models/family";
 import type { AuthorizedPerson } from "../models/authorized-person";
 import type { Family as FamilyView } from "../business/families";
 import type { AttendanceRecord } from "../models/attendance";
+import type { ChildSchedule, ScheduleException } from "../models/child-schedule";
 import type {
   ActivityRecord,
   DailyTransmission,
@@ -123,4 +125,18 @@ export interface IDataService {
     key: TransmissionSectionKey,
     itemId: string,
   ): Promise<DailyTransmission>;
+
+  // ---- Planning enfants (phase 8A)
+  getSections(): Promise<Section[]>;
+  getChildSchedules(): Promise<ChildSchedule[]>;
+  getScheduleExceptions(): Promise<ScheduleException[]>;
+  getScheduleByChild(childId: string): Promise<ChildSchedule | null>;
+  /** Crée OU remplace le planning hebdomadaire d'un enfant (1 planning / enfant). */
+  upsertChildSchedule(schedule: ChildSchedule): Promise<ChildSchedule>;
+  createScheduleException(ex: ScheduleException): Promise<ScheduleException>;
+  updateScheduleException(
+    id: string,
+    patch: Partial<ScheduleException>,
+  ): Promise<ScheduleException>;
+  deleteScheduleException(id: string): Promise<boolean>;
 }

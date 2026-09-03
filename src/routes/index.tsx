@@ -39,6 +39,8 @@ import {
   initials,
 } from "@/lib/business/stats";
 import { toast } from "sonner";
+import { localDateISO } from "@/lib/models/attendance";
+import { expectedChildrenCount } from "@/lib/business/planning";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -74,6 +76,12 @@ function Dashboard() {
   if (!db) return null;
   const s = computeDashboard(db);
   const currency = db.establishment.currency;
+  const expectedToday = expectedChildrenCount(
+    db.children,
+    db.childSchedules ?? [],
+    db.scheduleExceptions ?? [],
+    localDateISO(),
+  );
 
   const quickActions = [
     { label: "Ajouter un enfant", icon: Plus, to: "/enfants", perm: "children.edit" as const },
@@ -157,7 +165,7 @@ function Dashboard() {
           value={s.present}
           icon={CheckCircle2}
           tone="success"
-          hint={`${s.departed} déjà partis`}
+          hint={`${s.departed} déjà partis · ${expectedToday} attendus au planning`}
         />
         <StatCard
           label="Absents"

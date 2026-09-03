@@ -110,6 +110,9 @@ export type { DailyTransmission } from "../models/daily-transmission";
 /** Contacts & autorisations par famille (phase 7) — voir src/lib/models/authorized-person.ts. */
 export type { AuthorizedPerson } from "../models/authorized-person";
 
+/** Rythme hebdomadaire prévisionnel d'un enfant (phase 8A) — voir src/lib/models/child-schedule.ts. */
+export type { ChildSchedule, ScheduleException } from "../models/child-schedule";
+
 export interface Employee {
   id: ID;
   firstName: string;
@@ -189,6 +192,8 @@ export interface Database {
   authorizedPersons: import("../models/authorized-person").AuthorizedPerson[];
   attendance: import("../models/attendance").AttendanceRecord[];
   dailyTransmissions: import("../models/daily-transmission").DailyTransmission[];
+  childSchedules: import("../models/child-schedule").ChildSchedule[];
+  scheduleExceptions: import("../models/child-schedule").ScheduleException[];
   employees: Employee[];
   invoices: Invoice[];
   payments: Payment[];

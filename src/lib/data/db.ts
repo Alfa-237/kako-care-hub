@@ -52,6 +52,16 @@ export async function initDatabase(): Promise<Database> {
       next = { ...next, authorizedPersons: [] };
       await storage.write(DB_KEY, next);
     }
+    // Migration 8A : ajoute les collections du planning enfants
+    // (rythmes hebdomadaires + exceptions ponctuelles).
+    if (!Array.isArray(next.childSchedules)) {
+      next = { ...next, childSchedules: [] };
+      await storage.write(DB_KEY, next);
+    }
+    if (!Array.isArray(next.scheduleExceptions)) {
+      next = { ...next, scheduleExceptions: [] };
+      await storage.write(DB_KEY, next);
+    }
     // Migration 6 : garantit la présence d'un administrateur actif (+ raccourci
     // admin) et audite les journaux à 1000 entrées max.
     const hasAdmin = next.users.some((u) => u.role === "ADMINISTRATEUR" && u.status === "actif");

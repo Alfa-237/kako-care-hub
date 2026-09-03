@@ -3,11 +3,12 @@
 // que la couche historique (db.ts) et déclenchent sa notification, afin que
 // les composants legacy (useDatabase) restent réactifs.
 import { initDatabase, mutate, onDatabaseChanged } from "../data/db";
-import type { Child, ChildParent, CollectionKey, Database, Parent } from "../data/types";
+import type { Child, ChildParent, CollectionKey, Database, Parent, Section } from "../data/types";
 import { getFamilyViewById, listFamilies } from "../business/families";
 import type { FamilyRecord } from "../models/family";
 import type { AttendanceRecord } from "../models/attendance";
 import type { AuthorizedPerson } from "../models/authorized-person";
+import type { ChildSchedule, ScheduleException } from "../models/child-schedule";
 import { localDateISO } from "../models/attendance";
 import type { IDataService, AttendanceSummary, TransmissionSectionKey } from "./data-service";
 import type {
@@ -31,6 +32,8 @@ export const ID_PREFIXES: Partial<Record<CollectionKey, string>> = {
   attendance: "att",
   dailyTransmissions: "tr",
   authorizedPersons: "ap",
+  childSchedules: "sch",
+  scheduleExceptions: "exc",
 };
 
 function collectionOf(db: Database, key: CollectionKey): Array<{ id: string }> {
@@ -487,6 +490,80 @@ class LocalStorageDataService implements IDataService {
     });
     clone[key] = section as never;
     return clone;
+  }
+
+  // ---- Planning enfants (phase 8A)
+
+  async getSections(): Promise<Section[]> {
+    const db = await initDatabase();
+    return structuredClone(db.sections ?? []);
+  }
+
+  async getChildSchedules(): Promise<ChildSchedule[]> {
+    const db = await initDatabase();
+    return structuredClone(db.childSchedules ?? []);
+  }
+
+  async getScheduleExceptions(): Promise<ScheduleException[]> {
+    const db = await initDatabase();
+    return structuredClone(db.scheduleExceptions ?? []);
+  }
+
+  async getScheduleByChild(childId: string): Promise<ChildSchedule | null> {
+    const db = await initDatabase();
+    const found = (db.childSchedules ?? []).find((s) => s.childId === childId);
+    return found ? structuredClone(found) : null;
+  }
+
+  async upsertChildSchedule(schedule: ChildSchedule): Promise<ChildSchedule> {
+    let result: ChildSchedule | null = null;
+    await mutate((d) => {
+      d.childSchedules = d.childSchedules ?? [];
+      const idx = d.childSchedules.findIndex((s) => s.childId === schedule.childId);
+      const now = new Date().toISOString();
+      if (idx >= 0) {
+        d.childSchedules[idx] = { ...schedule, updatedAt: now, id: d.childSchedules[idx]!.id };
+        result = structuredClone(d.childSchedules[idx]);
+      } else {
+        const created: ChildSchedule = {
+          ...schedule,
+          id: schedule.id || this.nextId("childSchedules", "sch"),
+          createdAt: now,
+          updatedAt: now,
+        };
+        d.childSchedules.push(created);
+        result = structuredClone(created);
+      }
+    });
+    if (!result) throw new Error("Échec de l'enregistrement du planning.");
+    return result;
+  }
+
+  async createScheduleException(ex: ScheduleException): Promise<ScheduleException> {
+    const now = new Date().toISOString();
+    const created: ScheduleException = {
+      ...ex,
+      id: ex.id || this.nextId("scheduleExceptions", "exc"),
+      createdAt: now,
+      updatedAt: now,
+    };
+    const saved = await this.create<ScheduleException>("scheduleExceptions", created);
+    return saved;
+  }
+
+  async updateScheduleException(
+    id: string,
+    patch: Partial<ScheduleException>,
+  ): Promise<ScheduleException> {
+    const updated = await this.update<ScheduleException>("scheduleExceptions", id, {
+      ...patch,
+      updatedAt: new Date().toISOString(),
+    });
+    return updated;
+  }
+
+  async deleteScheduleException(id: string): Promise<boolean> {
+    return this.delete("scheduleExceptions", id);
   }
 
   async getTodayAttendanceSummary(date?: string): Promise<AttendanceSummary> {

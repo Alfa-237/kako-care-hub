@@ -27,6 +27,7 @@ export type Permission =
   // Inscriptions / planning / activités / soins (modules existants)
   | "enrollment.manage"
   | "planning.view"
+  | "planning.update"
   | "attendance.view"
   | "attendance.edit"
   | "attendance.create"
@@ -78,6 +79,7 @@ const ALL: Permission[] = [
   "families.delete",
   "enrollment.manage",
   "planning.view",
+  "planning.update",
   "attendance.view",
   "attendance.edit",
   "attendance.create",
@@ -155,6 +157,7 @@ const _BASE: Record<RoleCode, Permission[]> = {
     "families.delete",
     "enrollment.manage",
     "planning.view",
+    "planning.update",
     "attendance.view",
     "attendance.create",
     "attendance.update",
