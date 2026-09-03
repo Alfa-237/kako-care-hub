@@ -107,6 +107,8 @@ export interface DeparturePayload {
   date?: string | undefined;
   departureTime: string;
   pickedUpBy: string;
+  /** Phase 7 : true si récupéré par une personne autorisée, false sinon. */
+  pickupAuthorized: boolean;
 }
 
 /**
@@ -116,7 +118,13 @@ export interface DeparturePayload {
 export function useRecordDeparture() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ childId, date, departureTime, pickedUpBy }: DeparturePayload) => {
+    mutationFn: async ({
+      childId,
+      date,
+      departureTime,
+      pickedUpBy,
+      pickupAuthorized,
+    }: DeparturePayload) => {
       const early = isEarlyDeparture(departureTime);
       return dataService.upsertAttendance({
         childId,
@@ -124,6 +132,7 @@ export function useRecordDeparture() {
         status: early ? "depart-anticipe" : "present",
         departureTime,
         departurePickedUpBy: pickedUpBy.trim(),
+        pickupAuthorized,
       });
     },
     onSuccess: () => invalidateAttendance(qc),

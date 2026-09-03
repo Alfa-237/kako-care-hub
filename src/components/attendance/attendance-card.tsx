@@ -47,6 +47,15 @@ export function AttendanceCard({
         <p className="flex items-center gap-2 truncate text-[14.5px] font-semibold">
           {fullName(child)}
           <AttendanceStatusBadge status={status} />
+          {record?.pickupAuthorized === false && record.departureTime ? (
+            <span
+              className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-1.5 py-0.5 text-[10px] font-semibold text-destructive"
+              data-testid="unauthorized-departure"
+              title="Récupéré par une personne non autorisée (vérification requise)"
+            >
+              ⚠ départ non autorisé
+            </span>
+          ) : null}
         </p>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">{sectionName}</p>
         <AttendanceTimes record={record} />

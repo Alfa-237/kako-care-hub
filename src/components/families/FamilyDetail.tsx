@@ -12,6 +12,7 @@ import {
   FileText,
   CreditCard,
   Clock,
+  Contact,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,10 @@ import { FamilyFormDialog } from "./family-form-dialog";
 import { LinkChildDialog } from "./link-child-dialog";
 import { LinkParentDialog } from "./link-parent-dialog";
 import { useFamilyView, useUpdateFamily } from "@/hooks/use-families";
+import { useFamilyContacts, useDeleteContact } from "@/hooks/use-family-contacts";
+import { authorizedPersonInitials, type AuthorizedPerson } from "@/lib/models/authorized-person";
+import { AuthorizedPersonDialog } from "./authorized-person-dialog";
+import { AuthorizationBadges } from "./authorization-badges";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const STATUS_TONES = {
@@ -57,6 +62,8 @@ export const FamilyDetail: FC<FamilyDetailProps> = ({ id }) => {
 
   const familyQuery = useFamilyView(id);
   const updateFamily = useUpdateFamily();
+  const contactsQuery = useFamilyContacts(id);
+  const deleteContact = useDeleteContact();
 
   const [editParentOpen, setEditParentOpen] = useState(false);
   const [editingParent, setEditingParent] = useState<string | null>(null);
@@ -65,6 +72,9 @@ export const FamilyDetail: FC<FamilyDetailProps> = ({ id }) => {
   const [linkParentChildId, setLinkParentChildId] = useState<string | null>(null);
   const [unlinkCpId, setUnlinkCpId] = useState<string | null>(null);
   const [editFamilyOpen, setEditFamilyOpen] = useState(false);
+  const [addContactOpen, setAddContactOpen] = useState(false);
+  const [editingContact, setEditingContact] = useState<AuthorizedPerson | null>(null);
+  const [deletingContact, setDeletingContact] = useState<AuthorizedPerson | null>(null);
   /** Mode du dialog responsable : création simple ou définition du responsable principal. */
   const [definePrimaryMode, setDefinePrimaryMode] = useState(false);
 
@@ -197,6 +207,19 @@ export const FamilyDetail: FC<FamilyDetailProps> = ({ id }) => {
     setUnlinkCpId(null);
   }
 
+  async function handleConfirmDeleteContact() {
+    if (!deletingContact) return;
+    try {
+      await deleteContact.mutateAsync(deletingContact);
+      toast.success("Contact supprimé", {
+        description: `${deletingContact.firstName} ${deletingContact.lastName}`,
+      });
+      setDeletingContact(null);
+    } catch {
+      toast.error("Erreur", { description: "La suppression du contact a échoué." });
+    }
+  }
+
   const linkedParentNames = (childId: string) => {
     const links = childParentMap.get(childId) ?? [];
     return links
@@ -253,6 +276,9 @@ export const FamilyDetail: FC<FamilyDetailProps> = ({ id }) => {
           </TabsTrigger>
           <TabsTrigger value="urgences">
             <AlertTriangle className="mr-2 size-4" /> Urgences & Autorisations
+          </TabsTrigger>
+          <TabsTrigger value="contacts">
+            <Contact className="mr-2 size-4" /> Autorisations & contacts
           </TabsTrigger>
           <TabsTrigger value="documents">
             <FileText className="mr-2 size-4" /> Documents
@@ -601,6 +627,106 @@ export const FamilyDetail: FC<FamilyDetailProps> = ({ id }) => {
           </section>
         </TabsContent>
 
+        <TabsContent value="contacts" className="space-y-5">
+          <section className="rounded-xl border bg-card p-5 shadow-card">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-foreground">Contacts & autorisations</h2>
+              {can("families.update") ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setEditingContact(null);
+                    setAddContactOpen(true);
+                  }}
+                >
+                  <Plus className="mr-2 size-4" /> Ajouter un contact
+                </Button>
+              ) : null}
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Personnes autorisées à récupérer les enfants, à être contactées en urgence, à recevoir
+              les documents ou à signer.
+            </p>
+
+            {contactsQuery.isPending ? (
+              <p className="mt-4 text-sm text-muted-foreground">Chargement des contacts…</p>
+            ) : (contactsQuery.data ?? []).length === 0 ? (
+              <div className="mt-4 rounded-xl border border-dashed p-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Aucun contact enregistré pour cette famille.
+                </p>
+              </div>
+            ) : (
+              <ul className="mt-4 space-y-3">
+                {(contactsQuery.data ?? []).map((c) => (
+                  <li
+                    key={c.id}
+                    className="group relative rounded-xl border p-4 transition-colors hover:bg-muted/20"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                          {authorizedPersonInitials(c)}
+                        </div>
+                        <div>
+                          <p className="font-medium">
+                            {c.firstName} {c.lastName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {c.relation} · {c.phone}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <AuthorizationBadges
+                          canPickup={c.canPickup}
+                          emergencyContact={c.emergencyContact}
+                          receivesDocuments={c.receivesDocuments}
+                          canSign={c.canSign}
+                        />
+                        {can("families.update") ? (
+                          <div className="flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingContact(c);
+                                setAddContactOpen(true);
+                              }}
+                              title="Modifier ce contact"
+                              className="rounded-md bg-muted p-1.5 text-muted-foreground shadow-sm transition-colors hover:text-foreground"
+                            >
+                              <Pencil className="size-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeletingContact(c)}
+                              title="Supprimer ce contact"
+                              className="rounded-md bg-muted p-1.5 text-destructive shadow-sm transition-colors hover:text-destructive/80"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                    {c.profession || c.idDocument ? (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {c.profession ? `Profession : ${c.profession}` : ""}
+                        {c.profession && c.idDocument ? " · " : ""}
+                        {c.idDocument ? `Pièce d'identité : ${c.idDocument}` : ""}
+                      </p>
+                    ) : null}
+                    {c.notes ? (
+                      <p className="mt-1 text-xs text-muted-foreground/70">{c.notes}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </TabsContent>
+
         <TabsContent value="documents" className="space-y-5">
           <section className="rounded-xl border bg-card p-5 shadow-card">
             <div className="flex items-center justify-between gap-3">
@@ -719,6 +845,45 @@ export const FamilyDetail: FC<FamilyDetailProps> = ({ id }) => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Retirer le lien
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AuthorizedPersonDialog
+        open={addContactOpen}
+        onOpenChange={setAddContactOpen}
+        familyId={record.id}
+        contact={editingContact}
+      />
+
+      <AlertDialog
+        open={Boolean(deletingContact)}
+        onOpenChange={(o) => setDeletingContact(o ? deletingContact : null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce contact ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deletingContact
+                ? `${deletingContact.firstName} ${deletingContact.lastName} sera définitivement supprimé${
+                    deletingContact.canPickup
+                      ? " et ne pourra plus récupérer d'enfants sans vérification."
+                      : "."
+                  }`
+                : "Cette action est irréversible."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeletingContact(null)}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void handleConfirmDeleteContact();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

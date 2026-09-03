@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   BookOpen,
   Droplets,
@@ -23,6 +24,8 @@ import { ABSENCE_TYPE_LABELS } from "@/lib/models/attendance";
 import { MOOD_EMOJI } from "@/lib/models/daily-transmission";
 import { useAttendanceByChild } from "@/hooks/use-attendance";
 import { useDailyTransmissionsByChild } from "@/hooks/use-daily-transmissions";
+import { useFamilyContacts } from "@/hooks/use-family-contacts";
+import { AuthorizationBadges } from "@/components/families/authorization-badges";
 import { AttendanceStatusBadge } from "@/components/attendance/attendance-status-badge";
 
 function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
@@ -95,6 +98,13 @@ export function ChildDetail({ child }: { child: Child }) {
   // Hooks appelés inconditionnellement (règle des hooks) — avant tout retour anticipé.
   const { data: attendances } = useAttendanceByChild(child.id);
   const { data: transmissions } = useDailyTransmissionsByChild(child.id);
+  const childFamilyId = useMemo(() => {
+    if (!db) return null;
+    const link = db.childParents.find((cp) => cp.childId === child.id);
+    if (!link) return null;
+    return db.families.find((f) => f.primaryParentId === link.parentId)?.id ?? null;
+  }, [db, child.id]);
+  const { data: pickupContacts } = useFamilyContacts(childFamilyId ?? undefined);
   if (!db) return null;
 
   const section = db.sections.find((s) => s.id === child.sectionId);
@@ -208,6 +218,45 @@ export function ChildDetail({ child }: { child: Child }) {
             ))}
           </ul>
         )}
+        <section className="mt-6 rounded-xl border bg-card p-5 shadow-card">
+          <h2 className="text-sm font-semibold text-foreground">
+            Personnes autorisées à récupérer
+          </h2>
+          {!childFamilyId ? (
+            <p className="mt-3 text-sm text-muted-foreground/60">
+              Aucune famille rattachée à cet enfant.
+            </p>
+          ) : (pickupContacts ?? []).length === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground/60">
+              Aucune personne autorisée enregistrée pour cette famille.
+            </p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {(pickupContacts ?? []).map((c) => (
+                <li
+                  key={c.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {c.firstName} {c.lastName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {c.relation}
+                      {c.phone ? ` · ${c.phone}` : ""}
+                    </p>
+                  </div>
+                  <AuthorizationBadges
+                    canPickup={c.canPickup}
+                    emergencyContact={c.emergencyContact}
+                    receivesDocuments={c.receivesDocuments}
+                    canSign={c.canSign}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </TabsContent>
 
       <TabsContent value="sante">

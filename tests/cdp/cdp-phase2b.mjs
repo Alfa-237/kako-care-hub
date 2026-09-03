@@ -43,37 +43,69 @@ async function waitFor(expr, label, timeoutMs = 45000) {
 }
 
 async function clickSel(selector) {
-  const rect = await ev(`(() => {
+  const r = await ev(`(() => {
     const el = document.querySelector(${JSON.stringify(selector)});
-    if (!el) return null;
+    if (!el) return 'NO';
     el.scrollIntoView({ block: 'center' });
-    const r = el.getBoundingClientRect();
-    return JSON.stringify({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
+    const rect = el.getBoundingClientRect();
+    const cx = rect.x + rect.width / 2, cy = rect.y + rect.height / 2;
+    for (const t of ['pointerdown','mousedown','pointerup','mouseup','click']) {
+      const e = t.startsWith('pointer')
+        ? new PointerEvent(t, { bubbles: true, cancelable: true, button: 0, pointerId: 1, isPrimary: true, clientX: cx, clientY: cy, view: window })
+        : new MouseEvent(t, { bubbles: true, cancelable: true, button: 0, clientX: cx, clientY: cy, view: window });
+      el.dispatchEvent(e);
+    }
+    return 'OK';
   })()`);
-  if (!rect) return false;
-  const { x, y } = JSON.parse(rect);
-  await sleep(250);
-  await send("Input.dispatchMouseEvent", { type: "mousePressed", x, y, button: "left", clickCount: 1 });
-  await send("Input.dispatchMouseEvent", { type: "mouseReleased", x, y, button: "left", clickCount: 1 });
   await sleep(400);
-  return true;
+  return r === "OK";
 }
 
 async function clickVisible(selector, text) {
-  const rect = await ev(`(() => {
-    const el = [...document.querySelectorAll(${JSON.stringify(selector)})].find(x => x.textContent.includes(${JSON.stringify(text)}));
-    if (!el) return null;
+  const textMatch = JSON.stringify(text);
+  const r = await ev(`(() => {
+    const el = [...document.querySelectorAll(${JSON.stringify(selector)})].find(x => (x.textContent||'').includes(${textMatch}));
+    if (!el) return 'NO';
     el.scrollIntoView({ block: 'center' });
-    const r = el.getBoundingClientRect();
-    return JSON.stringify({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
+    const rect = el.getBoundingClientRect();
+    const cx = rect.x + rect.width / 2, cy = rect.y + rect.height / 2;
+    for (const t of ['pointerdown','mousedown','pointerup','mouseup','click']) {
+      const e = t.startsWith('pointer')
+        ? new PointerEvent(t, { bubbles: true, cancelable: true, button: 0, pointerId: 1, isPrimary: true, clientX: cx, clientY: cy, view: window })
+        : new MouseEvent(t, { bubbles: true, cancelable: true, button: 0, clientX: cx, clientY: cy, view: window });
+      el.dispatchEvent(e);
+    }
+    return 'OK';
   })()`);
-  if (!rect) return false;
-  const { x, y } = JSON.parse(rect);
-  await sleep(250);
-  await send("Input.dispatchMouseEvent", { type: "mousePressed", x, y, button: "left", clickCount: 1 });
-  await send("Input.dispatchMouseEvent", { type: "mouseReleased", x, y, button: "left", clickCount: 1 });
   await sleep(400);
-  return true;
+  return r === "OK";
+}
+
+async function clickUntil(sel, text, untilJs, maxTries = 6, settleMs = 600) {
+  const textMatch = text ? JSON.stringify(text) : "null";
+  for (let i = 1; i <= maxTries; i++) {
+    const r = await ev(`(() => {
+      const all = [...document.querySelectorAll(${JSON.stringify(sel)})];
+      const el = ${textMatch} ? all.find(x => (x.textContent||'').includes(${textMatch}) || (x.getAttribute('aria-label')||'').includes(${textMatch}) || (x.getAttribute('title')||'').includes(${textMatch})) : all[0];
+      if (!el) return 'NO';
+      el.scrollIntoView({ block: 'center' });
+      const rect = el.getBoundingClientRect();
+      const cx = rect.x + rect.width / 2, cy = rect.y + rect.height / 2;
+      for (const t of ['pointerdown','mousedown','pointerup','mouseup','click']) {
+        const e = t.startsWith('pointer')
+          ? new PointerEvent(t, { bubbles: true, cancelable: true, button: 0, pointerId: 1, isPrimary: true, clientX: cx, clientY: cy, view: window })
+          : new MouseEvent(t, { bubbles: true, cancelable: true, button: 0, clientX: cx, clientY: cy, view: window });
+        el.dispatchEvent(e);
+      }
+      return 'OK';
+    })()`);
+    if (r !== "OK") { await sleep(600); continue; }
+    if (untilJs) {
+      const ok = await ev(untilJs);
+      if (ok && ok !== "false" && !String(ok).startsWith("ERR")) { await sleep(settleMs); return true; }
+    } else { await sleep(settleMs); return true; }
+  }
+  return false;
 }
 
 async function typeInto(sel, text) {

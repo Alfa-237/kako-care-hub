@@ -107,6 +107,9 @@ export type { AttendanceRecord } from "../models/attendance";
 /** Cahier de liaison quotidien (phase 3C) — voir src/lib/models/daily-transmission.ts. */
 export type { DailyTransmission } from "../models/daily-transmission";
 
+/** Contacts & autorisations par famille (phase 7) — voir src/lib/models/authorized-person.ts. */
+export type { AuthorizedPerson } from "../models/authorized-person";
+
 export interface Employee {
   id: ID;
   firstName: string;
@@ -183,6 +186,7 @@ export interface Database {
   children: Child[];
   parents: Parent[];
   childParents: ChildParent[];
+  authorizedPersons: import("../models/authorized-person").AuthorizedPerson[];
   attendance: import("../models/attendance").AttendanceRecord[];
   dailyTransmissions: import("../models/daily-transmission").DailyTransmission[];
   employees: Employee[];

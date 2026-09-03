@@ -7,6 +7,7 @@ import type { Child, ChildParent, CollectionKey, Database, Parent } from "../dat
 import { getFamilyViewById, listFamilies } from "../business/families";
 import type { FamilyRecord } from "../models/family";
 import type { AttendanceRecord } from "../models/attendance";
+import type { AuthorizedPerson } from "../models/authorized-person";
 import { localDateISO } from "../models/attendance";
 import type { IDataService, AttendanceSummary, TransmissionSectionKey } from "./data-service";
 import type {
@@ -29,6 +30,7 @@ export const ID_PREFIXES: Partial<Record<CollectionKey, string>> = {
   activities: "act",
   attendance: "att",
   dailyTransmissions: "tr",
+  authorizedPersons: "ap",
 };
 
 function collectionOf(db: Database, key: CollectionKey): Array<{ id: string }> {
@@ -179,6 +181,37 @@ class LocalStorageDataService implements IDataService {
   async getFamilyView(familyId: string) {
     const db = await initDatabase();
     return getFamilyViewById(db, familyId);
+  }
+
+  // ---- Contacts & autorisations par famille (phase 7)
+
+  async getContactsByFamily(familyId: string): Promise<AuthorizedPerson[]> {
+    const db = await initDatabase();
+    return structuredClone((db.authorizedPersons ?? []).filter((c) => c.familyId === familyId));
+  }
+
+  async getPickupPersons(familyId: string): Promise<AuthorizedPerson[]> {
+    const db = await initDatabase();
+    return structuredClone(
+      (db.authorizedPersons ?? []).filter((c) => c.familyId === familyId && c.canPickup),
+    );
+  }
+
+  async createContact(contact: AuthorizedPerson): Promise<AuthorizedPerson> {
+    const created = await this.create<AuthorizedPerson>("authorizedPersons", contact);
+    return created;
+  }
+
+  async updateContact(id: string, patch: Partial<AuthorizedPerson>): Promise<AuthorizedPerson> {
+    const updated = await this.update<AuthorizedPerson>("authorizedPersons", id, {
+      ...patch,
+      updatedAt: new Date().toISOString(),
+    });
+    return updated;
+  }
+
+  async deleteContact(id: string): Promise<boolean> {
+    return this.delete("authorizedPersons", id);
   }
 
   // ---- Présences / pointage quotidien (phase 3B)

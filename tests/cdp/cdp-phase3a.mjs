@@ -56,18 +56,44 @@ async function measure(sel, text) {
 
 async function rawClick(x, y) {
   await sleep(200);
-  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
-  await send("Input.dispatchMouseEvent", { type: "mousePressed", x, y, button: "left", clickCount: 1 });
-  await send("Input.dispatchMouseEvent", { type: "mouseReleased", x, y, button: "left", clickCount: 1 });
+  await ev(`(() => {
+    const el = document.elementFromPoint(${x}, ${y});
+    if (!el) return "no-el";
+    for (const t of ["pointerdown","mousedown","pointerup","mouseup","click"]) {
+      const e = t.startsWith("pointer") ? new PointerEvent(t,{bubbles:true,button:0,pointerId:1}) : new MouseEvent(t,{bubbles:true,button:0});
+      el.dispatchEvent(e);
+    }
+    return "ok";
+  })()`);
   await sleep(500);
+}
+
+async function jsClickElement(sel, text) {
+  const textMatch = text ? JSON.stringify(text) : "null";
+  const r = await ev(`(() => {
+    const all = [...document.querySelectorAll(${JSON.stringify(sel)})];
+    const el = ${textMatch} ? all.find(x => (x.textContent||'').includes(${textMatch}) || (x.getAttribute('aria-label')||'').includes(${textMatch}) || (x.getAttribute('title')||'').includes(${textMatch})) : all[0];
+    if (!el) return 'NO';
+    el.scrollIntoView({ block: 'center' });
+    const rect = el.getBoundingClientRect();
+    const cx = rect.x + rect.width / 2, cy = rect.y + rect.height / 2;
+    for (const t of ['pointerdown','mousedown','pointerup','mouseup','click']) {
+      const e = t.startsWith('pointer')
+        ? new PointerEvent(t, { bubbles: true, cancelable: true, button: 0, pointerId: 1, isPrimary: true, clientX: cx, clientY: cy, view: window })
+        : new MouseEvent(t, { bubbles: true, cancelable: true, button: 0, clientX: cx, clientY: cy, view: window });
+      el.dispatchEvent(e);
+    }
+    return 'OK';
+  })()`);
+  await sleep(500);
+  return r === "OK" ? "ok" : "no-el";
 }
 
 // Click with retry-until-effect: keeps clicking until `untilJs` evaluates truthy or tries exhausted
 async function clickUntil(sel, text, untilJs, maxTries = 6, settleMs = 600) {
   for (let i = 1; i <= maxTries; i++) {
-    const pos = await measure(sel, text);
-    if (!pos) { await sleep(600); continue; }
-    await rawClick(pos.x, pos.y);
+    const result = await jsClickElement(sel, text);
+    if (result === "no-el") { await sleep(600); continue; }
     if (untilJs) {
       const ok = await ev(untilJs);
       if (ok && ok !== "false" && !String(ok).startsWith("ERR")) { await sleep(settleMs); return true; }

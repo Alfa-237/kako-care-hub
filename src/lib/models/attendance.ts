@@ -25,6 +25,12 @@ export interface AttendanceRecord {
   // ---- Départ
   departureTime: string | null; // HH:mm
   departurePickedUpBy: string | null;
+  /**
+   * Phase 7 : true si le départ a été effectué par une personne autorisée à
+   * récupérer l'enfant (canPickup), false sinon (« Autre personne », alerte
+   * levée). Absent (undefined) pour les anciens pointages.
+   */
+  pickupAuthorized?: boolean;
 
   // ---- Absence
   absenceReason: string | null;
@@ -126,8 +132,8 @@ export const absenceFormSchema = z.object({
 
 export type AbsenceFormInput = z.infer<typeof absenceFormSchema>;
 
-/** Schéma complet (stockage) — garantit la conformité au type. */
-export const attendanceRecordSchema: z.ZodType<AttendanceRecord> = z.object({
+/** Schéma complet (stockage) — validation des données persistées. */
+export const attendanceRecordSchema = z.object({
   id: z.string(),
   childId: z.string(),
   familyId: z.string().nullable(),
@@ -137,6 +143,7 @@ export const attendanceRecordSchema: z.ZodType<AttendanceRecord> = z.object({
   arrivalAccompaniedBy: z.string().nullable(),
   departureTime: z.string().nullable(),
   departurePickedUpBy: z.string().nullable(),
+  pickupAuthorized: z.boolean().optional(),
   absenceReason: z.string().nullable(),
   absenceType: absenceTypeSchema.nullable(),
   notes: z.string(),

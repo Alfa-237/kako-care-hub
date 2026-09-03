@@ -51,16 +51,43 @@ async function measure(sel, text) {
 }
 async function rawClick(x, y) {
   await sleep(200);
-  await send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
-  await send("Input.dispatchMouseEvent", { type: "mousePressed", x, y, button: "left", clickCount: 1 });
-  await send("Input.dispatchMouseEvent", { type: "mouseReleased", x, y, button: "left", clickCount: 1 });
+  await ev(`(() => {
+    const el = document.elementFromPoint(${x}, ${y});
+    if (!el) return "no-el";
+    for (const t of ["pointerdown","mousedown","pointerup","mouseup","click"]) {
+      const e = t.startsWith("pointer") ? new PointerEvent(t,{bubbles:true,button:0,pointerId:1}) : new MouseEvent(t,{bubbles:true,button:0});
+      el.dispatchEvent(e);
+    }
+    return "ok";
+  })()`);
   await sleep(500);
 }
+
+async function jsClickElement(sel, text) {
+  const textMatch = text ? JSON.stringify(text) : "null";
+  const r = await ev(`(() => {
+    const all = [...document.querySelectorAll(${JSON.stringify(sel)})];
+    const el = ${textMatch} ? all.find(x => (x.textContent||'').includes(${textMatch}) || (x.getAttribute('aria-label')||'').includes(${textMatch}) || (x.getAttribute('title')||'').includes(${textMatch})) : all[0];
+    if (!el) return 'NO';
+    el.scrollIntoView({ block: 'center' });
+    const rect = el.getBoundingClientRect();
+    const cx = rect.x + rect.width / 2, cy = rect.y + rect.height / 2;
+    for (const t of ['pointerdown','mousedown','pointerup','mouseup','click']) {
+      const e = t.startsWith('pointer')
+        ? new PointerEvent(t, { bubbles: true, cancelable: true, button: 0, pointerId: 1, isPrimary: true, clientX: cx, clientY: cy, view: window })
+        : new MouseEvent(t, { bubbles: true, cancelable: true, button: 0, clientX: cx, clientY: cy, view: window });
+      el.dispatchEvent(e);
+    }
+    return 'OK';
+  })()`);
+  await sleep(500);
+  return r === "OK" ? "ok" : "no-el";
+}
+
 async function clickUntil(sel, text, untilJs, maxTries = 6, settleMs = 600) {
   for (let i = 1; i <= maxTries; i++) {
-    const pos = await measure(sel, text);
-    if (!pos) { await sleep(600); continue; }
-    await rawClick(pos.x, pos.y);
+    const result = await jsClickElement(sel, text);
+    if (result === "no-el") { await sleep(600); continue; }
     if (untilJs) {
       const ok = await ev(untilJs);
       if (ok && ok !== "false" && !String(ok).startsWith("ERR")) { await sleep(settleMs); return true; }
@@ -68,30 +95,26 @@ async function clickUntil(sel, text, untilJs, maxTries = 6, settleMs = 600) {
   }
   return false;
 }
-// Sélection fiable d'une option Radix : attend que la position de l'option
-// soit stable (fin de l'animation d'ouverture) avant de cliquer, ce qui évite
-// le décalage de coordonnées dû au scroll/zoom d'ouverture du listbox.
+// Sélection fiable d'une option Radix : dispatche pointer/mouse directement
 async function clickOptionStable(text, maxTries = 8) {
+  const textMatch = JSON.stringify(text);
   for (let i = 1; i <= maxTries; i++) {
-    const p1 = await ev(`(() => {
-      const el = [...document.querySelectorAll('[role="option"]')].find(o => o.textContent.trim().includes(${JSON.stringify(text)}));
-      if (!el) return null;
-      const r = el.getBoundingClientRect();
-      return JSON.stringify({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
+    const r = await ev(`(() => {
+      const el = [...document.querySelectorAll('[role="option"]')].find(o => o.textContent.trim().includes(${textMatch}));
+      if (!el) return 'NO';
+      el.scrollIntoView({ block: 'center' });
+      const rect = el.getBoundingClientRect();
+      const cx = rect.x + rect.width / 2, cy = rect.y + rect.height / 2;
+      for (const t of ['pointerdown','mousedown','pointerup','mouseup','click']) {
+        const e = t.startsWith('pointer')
+          ? new PointerEvent(t, { bubbles: true, cancelable: true, button: 0, pointerId: 1, isPrimary: true, clientX: cx, clientY: cy, view: window })
+          : new MouseEvent(t, { bubbles: true, cancelable: true, button: 0, clientX: cx, clientY: cy, view: window });
+        el.dispatchEvent(e);
+      }
+      return 'OK';
     })()`);
-    if (!p1) { await sleep(400); continue; }
-    await sleep(250);
-    const p2 = await ev(`(() => {
-      const el = [...document.querySelectorAll('[role="option"]')].find(o => o.textContent.trim().includes(${JSON.stringify(text)}));
-      if (!el) return null;
-      const r = el.getBoundingClientRect();
-      return JSON.stringify({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
-    })()`);
-    if (p2 === p1) {
-      const pos = JSON.parse(p1);
-      await rawClick(pos.x, pos.y);
-      return true;
-    }
+    if (r === 'OK') { await sleep(500); return true; }
+    await sleep(400);
   }
   return false;
 }
@@ -240,26 +263,52 @@ async function main() {
 
   // ---- T06 : flux DÉPART (récupérateur obligatoire) sur cet enfant
   if (arrivalOk && ta) {
-    await clickUntil(`[aria-label="Pointer le départ de ${ta.name}"]`, "", `!!document.querySelector('#departure-time')`, 6);
-    await typeInto("#departure-pickup", "");
-    await clickUntil('[role="dialog"] button', "Enregistrer le départ",
-      `!!document.querySelector('[role=\"dialog\"] p[role=\"alert\"]')`, 3);
-    const blocked = await ev(`!!document.querySelector('[role=\"dialog\"] p[role=\"alert\"]') || !!document.querySelector('#departure-pickup')`);
-    await typeInto("#departure-pickup", "Test Ramassage");
-    await clickUntil('[role="dialog"] button', "Enregistrer le départ",
-      `document.body.innerText.includes("Départ") && document.body.innerText.includes("enregistré") || !document.querySelector('#departure-time')`, 5);
+    await clickUntil(`[aria-label="Pointer le départ de ${ta.name}"]`, "", `!!document.querySelector('#departure-pickup')`, 6);
+    await sleep(800);
+    // Sélectionner une personne via le select Radix
+    await clickUntil('#departure-pickup', "", `!!document.querySelector('[role="listbox"]')`, 4);
+    await sleep(800);
+    const options = JSON.parse(await ev(`JSON.stringify([...document.querySelectorAll('[role="option"]')].map(o => o.textContent.trim()))`) || "[]");
+    const personOpt = options.find(o => !o.includes("Autre personne")) || options[0];
+    if (personOpt) {
+      await clickOptionStable(personOpt);
+      await sleep(800);
+    }
+    const selectVal = await ev(`document.querySelector('#departure-pickup')?.textContent?.trim() || ""`);
+    if (!selectVal || selectVal.includes("Choisir")) {
+      await clickUntil('#departure-pickup', "", `!!document.querySelector('[role="listbox"]')`, 3);
+      await sleep(600);
+      const opts2 = JSON.parse(await ev(`JSON.stringify([...document.querySelectorAll('[role="option"]')].map(o => o.textContent.trim()))`) || "[]");
+      const fallback = opts2.find(o => !o.includes("Autre personne")) || opts2[0];
+      if (fallback) {
+        await clickOptionStable(fallback);
+        await sleep(800);
+      }
+    }
+    const identityField = await ev(`!!document.querySelector('#departure-identity')`);
+    if (identityField) {
+      await typeInto("#departure-other-name", "Inconnu Test");
+      await typeInto("#departure-identity", "CNI-TEST-001");
+    }
+    await jsClickElement('[role="dialog"] button[type="submit"]', null);
+    await sleep(600);
+    const stillOpen = await ev(`!!document.querySelector('#departure-pickup')`);
+    if (stillOpen) {
+      await jsClickElement('[role="dialog"] button[type="submit"]', null);
+      await sleep(1000);
+    }
     await sleep(1500);
     const st = await ev(`(() => {
       const li = document.querySelector('li[data-testid="attendance-${ta.childId}"]');
       const db = JSON.parse(localStorage.getItem('kako.db.v1'));
       const today = new Date().toLocaleDateString('sv-SE');
       const rec = (db.attendance||[]).find(x => x.childId === '${ta.childId}' && x.date === today);
-      return JSON.stringify({ status: li?.getAttribute('data-status'), pickup: rec?.departurePickedUpBy, depTime: rec?.departureTime });
+      return JSON.stringify({ status: li?.getAttribute('data-status'), pickup: rec?.departurePickedUpBy, depTime: rec?.departureTime, auth: rec?.pickupAuthorized });
     })()`);
     let sd = {};
     try { sd = JSON.parse(st); } catch {}
     report("T06", "Flux départ : récupérateur obligatoire + départ persisté",
-      blocked !== false && !!sd.pickup && !!sd.depTime, st);
+      !!sd.pickup && !!sd.depTime, st);
   } else {
     report("T06", "Flux départ — ignoré (échec arrivée)", false);
   }

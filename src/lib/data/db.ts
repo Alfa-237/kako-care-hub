@@ -47,6 +47,11 @@ export async function initDatabase(): Promise<Database> {
       next = { ...next, dailyTransmissions: [] };
       await storage.write(DB_KEY, next);
     }
+    // Migration 7 : ajoute la collection des contacts & autorisations par famille.
+    if (!Array.isArray(next.authorizedPersons)) {
+      next = { ...next, authorizedPersons: [] };
+      await storage.write(DB_KEY, next);
+    }
     // Migration 6 : garantit la présence d'un administrateur actif (+ raccourci
     // admin) et audite les journaux à 1000 entrées max.
     const hasAdmin = next.users.some((u) => u.role === "ADMINISTRATEUR" && u.status === "actif");
@@ -157,6 +162,7 @@ export async function clearDemoData(): Promise<void> {
     d.children = d.children.filter((x) => !x.isDemo);
     d.parents = d.parents.filter((x) => !x.isDemo);
     d.childParents = d.childParents.filter((x) => !x.isDemo);
+    d.authorizedPersons = d.authorizedPersons.filter((x) => !x.isDemo);
     d.attendance = d.attendance.filter((x) => !x.isDemo);
     d.dailyTransmissions = d.dailyTransmissions.filter((x) => !x.isDemo);
     d.invoices = d.invoices.filter((x) => !x.isDemo);

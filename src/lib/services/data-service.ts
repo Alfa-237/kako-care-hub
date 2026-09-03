@@ -4,6 +4,7 @@
 import type { Child, Parent } from "../data/types";
 import type { CollectionKey } from "../data/types";
 import type { FamilyRecord } from "../models/family";
+import type { AuthorizedPerson } from "../models/authorized-person";
 import type { Family as FamilyView } from "../business/families";
 import type { AttendanceRecord } from "../models/attendance";
 import type {
@@ -59,6 +60,14 @@ export interface IDataService {
   // ---- Vues jointes famille (entité + responsable + membres + enfants)
   getFamilyViews(): Promise<FamilyView[]>;
   getFamilyView(familyId: string): Promise<FamilyView | null>;
+
+  // ---- Contacts & autorisations par famille (phase 7)
+  getContactsByFamily(familyId: string): Promise<AuthorizedPerson[]>;
+  /** Personnes autorisées à récupérer l'enfant (canPickup === true). */
+  getPickupPersons(familyId: string): Promise<AuthorizedPerson[]>;
+  createContact(contact: AuthorizedPerson): Promise<AuthorizedPerson>;
+  updateContact(id: string, patch: Partial<AuthorizedPerson>): Promise<AuthorizedPerson>;
+  deleteContact(id: string): Promise<boolean>;
 
   // ---- Présences / pointage quotidien (phase 3B)
   getAttendanceByDate(date: string): Promise<AttendanceRecord[]>;

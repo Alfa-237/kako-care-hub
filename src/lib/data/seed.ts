@@ -1,5 +1,6 @@
 import type { Database } from "./types";
 import { deriveFamiliesFromDatabase } from "../business/families";
+import type { AuthorizedPerson } from "../models/authorized-person";
 import type { AttendanceRecord } from "../models/attendance";
 import type {
   ActivityRecord,
@@ -632,6 +633,7 @@ export async function buildSeedDatabase(): Promise<Database> {
     children,
     parents,
     childParents,
+    authorizedPersons: [],
     attendance,
     dailyTransmissions,
     employees,
@@ -644,6 +646,101 @@ export async function buildSeedDatabase(): Promise<Database> {
 
   // Entités Family persistées, dérivées des relations de démonstration.
   base.families = deriveFamiliesFromDatabase(base);
+
+  // ---- Contacts & autorisations par famille (phase 7).
+  // Famille de référence : mère (toutes autorisations), père (récupération + urgence),
+  // voisine (récupération uniquement), oncle (urgence uniquement → NON autorisé
+  // récupération, utile pour tester l'alerte « Autre personne »).
+  const authorizedPersons: AuthorizedPerson[] = [];
+  let apSeq = 1;
+  const mkContact = (
+    familyId: string,
+    c: Omit<AuthorizedPerson, "id" | "familyId" | "createdAt" | "updatedAt">,
+  ): AuthorizedPerson => {
+    const now = new Date().toISOString();
+    return { id: uid("ap", apSeq++), familyId, createdAt: now, updatedAt: now, isDemo: true, ...c };
+  };
+  const PRINCIPAL_SUFFIX = ["", "", "A", "B", "C", "D"];
+  base.families.forEach((fam, idx) => {
+    const suffix = PRINCIPAL_SUFFIX[idx % PRINCIPAL_SUFFIX.length];
+    if (idx === 0) {
+      authorizedPersons.push(
+        mkContact(fam.id, {
+          firstName: "Marie",
+          lastName: `${fam.name.replace(/^Famille\s+/i, "")}${suffix}`,
+          relation: "Mère",
+          phone: "+237 699 11 22 33",
+          address: fam.address,
+          profession: "Enseignante",
+          idDocument: "CNI-1234567",
+          canPickup: true,
+          emergencyContact: true,
+          receivesDocuments: true,
+          canSign: true,
+          notes: "Responsable principal",
+        }),
+        mkContact(fam.id, {
+          firstName: "Jean",
+          lastName: `${fam.name.replace(/^Famille\s+/i, "")}${suffix}`,
+          relation: "Père",
+          phone: "+237 677 44 55 66",
+          canPickup: true,
+          emergencyContact: true,
+          receivesDocuments: false,
+          canSign: false,
+        }),
+        mkContact(fam.id, {
+          firstName: "Amina",
+          lastName: "Kamga",
+          relation: "Voisine",
+          phone: "+237 690 78 90 12",
+          canPickup: true,
+          emergencyContact: false,
+          receivesDocuments: false,
+          canSign: false,
+        }),
+        mkContact(fam.id, {
+          firstName: "Paul",
+          lastName: "Mbarga",
+          relation: "Oncle",
+          phone: "+237 655 33 44 55",
+          canPickup: false,
+          emergencyContact: true,
+          receivesDocuments: false,
+          canSign: false,
+          notes: "Non autorisé à récupérer l'enfant",
+        }),
+      );
+    } else if (idx % 2 === 0) {
+      authorizedPersons.push(
+        mkContact(fam.id, {
+          firstName: idx % 4 === 0 ? "Nadine" : "Serge",
+          lastName: `${fam.name.replace(/^Famille\s+/i, "")}${suffix}`,
+          relation: idx % 2 === 0 ? "Mère" : "Père",
+          phone: `+237 670 ${String(20 + (idx % 60)).padStart(2, "0")} 10`,
+          canPickup: true,
+          emergencyContact: idx % 3 !== 0,
+          receivesDocuments: idx % 4 === 0,
+          canSign: idx % 5 === 0,
+        }),
+      );
+      if (idx % 3 === 0) {
+        authorizedPersons.push(
+          mkContact(fam.id, {
+            firstName: "Grand-mère",
+            lastName: "Yaya",
+            relation: "Grand-mère",
+            phone: `+237 691 22 33 4${idx % 9}`,
+            canPickup: true,
+            emergencyContact: true,
+            receivesDocuments: false,
+            canSign: false,
+          }),
+        );
+      }
+    }
+  });
+  base.authorizedPersons = authorizedPersons;
 
   // Rattache le compte PARENT de démonstration à la première famille ayant un enfant.
   const firstParentFamily = base.families.find((f) =>
