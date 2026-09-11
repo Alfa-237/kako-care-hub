@@ -62,6 +62,26 @@ export async function initDatabase(): Promise<Database> {
       next = { ...next, scheduleExceptions: [] };
       await storage.write(DB_KEY, next);
     }
+    // Migration 8B : ajoute la collection employeeSchedules + ratio sur les sections.
+    if (!Array.isArray(next.employeeSchedules)) {
+      next = { ...next, employeeSchedules: [] };
+      await storage.write(DB_KEY, next);
+    }
+    if (next.sections.some((s) => !("ratio" in s))) {
+      const defaultRatio: Record<string, number> = {
+        "sec-001": 5,
+        "sec-002": 6,
+        "sec-003": 8,
+      };
+      next = {
+        ...next,
+        sections: next.sections.map((s) => ({
+          ...s,
+          ratio: (s as { ratio?: number }).ratio ?? defaultRatio[s.id] ?? 8,
+        })),
+      };
+      await storage.write(DB_KEY, next);
+    }
     // Migration 6 : garantit la présence d'un administrateur actif (+ raccourci
     // admin) et audite les journaux à 1000 entrées max.
     const hasAdmin = next.users.some((u) => u.role === "ADMINISTRATEUR" && u.status === "actif");

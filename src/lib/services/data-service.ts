@@ -4,6 +4,7 @@
 import type { Child, Parent } from "../data/types";
 import type { Section } from "../data/types";
 import type { CollectionKey } from "../data/types";
+import type { EmployeeSchedule } from "../data/types";
 import type { FamilyRecord } from "../models/family";
 import type { AuthorizedPerson } from "../models/authorized-person";
 import type { Family as FamilyView } from "../business/families";
@@ -139,4 +140,10 @@ export interface IDataService {
     patch: Partial<ScheduleException>,
   ): Promise<ScheduleException>;
   deleteScheduleException(id: string): Promise<boolean>;
+
+  // ---- Personnel (phase 8B)
+  getEmployeeSchedules(): Promise<EmployeeSchedule[]>;
+  getEmployeeSchedule(employeeId: string): Promise<EmployeeSchedule | null>;
+  upsertEmployeeSchedule(schedule: EmployeeSchedule): Promise<EmployeeSchedule>;
+  deleteEmployeeSchedule(id: string): Promise<boolean>;
 }

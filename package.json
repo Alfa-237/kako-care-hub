@@ -16,7 +16,8 @@
     "test:cdp:3c": "node tests/cdp/cdp-phase3c.mjs",
     "test:cdp:6": "node tests/cdp/cdp-phase6.mjs",
     "test:cdp:7": "node tests/cdp/cdp-phase7.mjs",
-    "test:cdp:8a": "node tests/cdp/cdp-phase8a.mjs"
+    "test:cdp:8a": "node tests/cdp/cdp-phase8a.mjs",
+    "test:cdp:8b": "node tests/cdp/cdp-phase8b.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -89,6 +90,7 @@
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^8.2.0"
+    "vite": "^8.2.0",
+    "ws": "^8.21.3"
   }
 }

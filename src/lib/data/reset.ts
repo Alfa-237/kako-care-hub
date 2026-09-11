@@ -30,6 +30,7 @@ export async function emptyData(): Promise<Database> {
     childSchedules: [],
     scheduleExceptions: [],
     employees: [],
+    employeeSchedules: [],
     invoices: [],
     payments: [],
     activities: [],

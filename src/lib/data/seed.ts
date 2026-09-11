@@ -119,16 +119,33 @@ export async function buildSeedDatabase(): Promise<Database> {
     ]);
 
   const sections = [
-    { id: "sec-001", name: "Les Poussins", ageMin: 3, ageMax: 12, capacity: 12, color: "poussins" },
+    {
+      id: "sec-001",
+      name: "Les Poussins",
+      ageMin: 3,
+      ageMax: 12,
+      capacity: 12,
+      ratio: 5,
+      color: "poussins",
+    },
     {
       id: "sec-002",
       name: "Les Explorateurs",
       ageMin: 12,
       ageMax: 24,
       capacity: 16,
+      ratio: 6,
       color: "explorateurs",
     },
-    { id: "sec-003", name: "Les Grands", ageMin: 24, ageMax: 48, capacity: 18, color: "grands" },
+    {
+      id: "sec-003",
+      name: "Les Grands",
+      ageMin: 24,
+      ageMax: 48,
+      capacity: 18,
+      ratio: 8,
+      color: "grands",
+    },
   ].map((s) => ({ ...s, isDemo: true }));
 
   const children: Database["children"] = [];
@@ -523,24 +540,142 @@ export async function buildSeedDatabase(): Promise<Database> {
     }
   }
 
-  const employees: Database["employees"] = [
-    ["Awa", "Ndiaye", "Directrice", "sec-003"],
-    ["Claire", "Marchand", "Éducatrice de jeunes enfants", "sec-001"],
-    ["Sofiane", "Belkacem", "Auxiliaire de puériculture", "sec-002"],
-    ["Marie", "Etoga", "Secrétaire", null],
-    ["Jean", "Tchoumi", "Agent d'entretien", null],
-  ].map((e, i) => ({
-    id: uid("emp", i + 1),
-    firstName: e[0] as string,
-    lastName: e[1] as string,
-    jobTitle: e[2] as string,
-    phone: `+237 69900${10 + i}0`,
-    sectionId: e[3] as string | null,
-    hireDate: daysAgo(500 - i * 40),
-    contractType: i < 3 ? "CDI" : "CDD",
-    presentToday: i !== 4,
-    isDemo: true,
-  }));
+  const employees: Database["employees"] = (
+    [
+      {
+        first: "Awa",
+        last: "Ndiaye",
+        fonction: "Directrice",
+        contract: "cdi",
+        phone: "+237 699001010",
+      },
+      {
+        first: "Claire",
+        last: "Marchand",
+        fonction: "Éducatrice",
+        contract: "cdi",
+        phone: "+237 699001020",
+      },
+      {
+        first: "Sofia",
+        last: "Bella",
+        fonction: "Éducatrice",
+        contract: "cdi",
+        phone: "+237 699001030",
+      },
+      {
+        first: "Nadia",
+        last: "Fofana",
+        fonction: "Éducatrice",
+        contract: "cdi",
+        phone: "+237 699001040",
+      },
+      {
+        first: "Priscilla",
+        last: "Owono",
+        fonction: "Éducatrice",
+        contract: "cdi",
+        phone: "+237 699001050",
+      },
+      {
+        first: "Sofiane",
+        last: "Belkacem",
+        fonction: "Auxiliaire",
+        contract: "cdi",
+        phone: "+237 699001060",
+      },
+{
+      first: "Solange",
+      last: "Mvondo",
+      fonction: "Cuisinière",
+      contract: "cdd",
+      phone: "+237 699001070",
+    },
+      {
+        first: "Jean",
+        last: "Tchoumi",
+        fonction: "Agent d'entretien",
+        contract: "cdd",
+        phone: "+237 699001080",
+      },
+    ] as const
+  ).map((e, i) => {
+    const now = new Date().toISOString();
+    return {
+      id: uid("emp", i + 1),
+      firstName: e.first,
+      lastName: e.last,
+      fonction: e.fonction,
+      phone: e.phone,
+      hireDate: daysAgo(500 - i * 40),
+      contractType: e.contract,
+      status: "actif" as const,
+      createdAt: now,
+      updatedAt: now,
+      isDemo: true,
+    };
+  });
+
+  // ---- Planning employés (phase 8B) : créneaux hebdomadaires.
+  // emp-001 = Directrice [1-5] 8:00-17:00 volant
+  // emp-002 = Claire (Éducatrice) [1-5] 7:30-16:30 → sec-001 (Poussins)
+  // emp-003 = Sofia (Éducatrice) [1-5] 7:30-16:30 → sec-002 (Explorateurs)
+  // emp-004 = Nadia (Éducatrice) [1-5] 7:30-16:30 → sec-003 (Grands)
+  // emp-005 = Priscilla (Éducatrice) [1-5] 7:30-16:30 → sec-001 (Poussins)
+  //   → sec-001 = 2 éducatrices = alerte ratio (sec ratio=5, ~11 enfants / 5 = 3 requis, 2 présentes)
+  // emp-006 = Sofiane (Auxiliaire) [1-5] 8:00-17:00 → sec-001 (Poussins) + conflit lundi
+  //   Conflit : 2 schedules lundi 8:00-12:00 vs 10:00-17:00 (chevauchement 10h-12h)
+  const empSchedules: Database["employeeSchedules"] = [];
+  {
+    const now = new Date().toISOString();
+    const WEEKDAYS_1_5 = [1, 2, 3, 4, 5];
+    const entries: Array<{
+      empIdx: number;
+      weekdays: number[];
+      start: string;
+      end: string;
+      section?: string;
+    }> = [
+      { empIdx: 0, weekdays: WEEKDAYS_1_5, start: "08:00", end: "17:00" },
+      { empIdx: 1, weekdays: WEEKDAYS_1_5, start: "07:30", end: "16:30", section: "sec-001" },
+      { empIdx: 2, weekdays: WEEKDAYS_1_5, start: "07:30", end: "16:30", section: "sec-002" },
+      { empIdx: 3, weekdays: WEEKDAYS_1_5, start: "07:30", end: "16:30", section: "sec-003" },
+      { empIdx: 4, weekdays: WEEKDAYS_1_5, start: "07:30", end: "16:30", section: "sec-001" },
+      { empIdx: 5, weekdays: WEEKDAYS_1_5, start: "08:00", end: "17:00", section: "sec-001" },
+    ];
+    let seq = 1;
+    const pushSchedule = (e: {
+      empIdx: number;
+      weekdays: number[];
+      start: string;
+      end: string;
+      section?: string;
+    }) => {
+      empSchedules.push({
+        id: uid("esch", seq++),
+        employeeId: uid("emp", e.empIdx + 1),
+        weekdays: e.weekdays,
+        startTime: e.start,
+        endTime: e.end,
+        ...(e.section ? { section: e.section } : {}),
+        updatedAt: now,
+      });
+    };
+    for (const e of entries) {
+      pushSchedule(e);
+    }
+    // Conflit intentional : Sofiane (auxiliaire) a un 2e schedule lundi 10:00-12:00
+    // qui chevauche avec son 8:00-17:00.
+    empSchedules.push({
+      id: uid("esch", seq++),
+      employeeId: uid("emp", 6),
+      weekdays: [1],
+      startTime: "10:00",
+      endTime: "12:00",
+      section: "sec-002",
+      updatedAt: now,
+    });
+  }
 
   const activities: Database["activities"] = [
     { title: "Parcours de motricité", category: "Motricité" },
@@ -712,6 +847,7 @@ export async function buildSeedDatabase(): Promise<Database> {
     childSchedules,
     scheduleExceptions,
     employees,
+    employeeSchedules: empSchedules,
     invoices,
     payments,
     activities,

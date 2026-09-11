@@ -46,6 +46,7 @@ export interface Section {
   ageMin: number;
   ageMax: number;
   capacity: number;
+  ratio: number;
   color: string;
   isDemo: boolean;
 }
@@ -113,16 +114,32 @@ export type { AuthorizedPerson } from "../models/authorized-person";
 /** Rythme hebdomadaire prévisionnel d'un enfant (phase 8A) — voir src/lib/models/child-schedule.ts. */
 export type { ChildSchedule, ScheduleException } from "../models/child-schedule";
 
+/** Planning hebdomadaire d'un employé (phase 8B). */
+export interface EmployeeSchedule {
+  id: ID;
+  employeeId: ID;
+  weekdays: number[];
+  startTime: string;
+  endTime: string;
+  section?: string;
+  updatedAt: string;
+}
+
 export interface Employee {
   id: ID;
   firstName: string;
   lastName: string;
-  jobTitle: string;
+  fonction:
+    "Directrice" | "Éducatrice" | "Auxiliaire" | "Secrétaire" | "Cuisinière" | "Agent d'entretien";
   phone: string;
-  sectionId: ID | null;
+  address?: string;
+  qualification?: string;
   hireDate: string;
-  contractType: string;
-  presentToday: boolean;
+  contractType: "cdi" | "cdd" | "stage" | "vacation";
+  status: "actif" | "inactif";
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
   isDemo: boolean;
 }
 
@@ -195,6 +212,7 @@ export interface Database {
   childSchedules: import("../models/child-schedule").ChildSchedule[];
   scheduleExceptions: import("../models/child-schedule").ScheduleException[];
   employees: Employee[];
+  employeeSchedules: EmployeeSchedule[];
   invoices: Invoice[];
   payments: Payment[];
   activities: Activity[];

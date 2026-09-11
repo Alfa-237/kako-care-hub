@@ -52,6 +52,10 @@ export type Permission =
   | "staff.view"
   | "staff.edit"
   | "staff.salary"
+  // Personnel avancé (phase 8B)
+  | "personnel.view"
+  | "personnel.manage"
+  | "personnel.delete"
   // Rapports
   | "reports.view"
   | "reports.export"
@@ -102,6 +106,9 @@ const ALL: Permission[] = [
   "staff.view",
   "staff.edit",
   "staff.salary",
+  "personnel.view",
+  "personnel.manage",
+  "personnel.delete",
   "reports.view",
   "reports.export",
   "documents.view",
@@ -174,6 +181,8 @@ const _BASE: Record<RoleCode, Permission[]> = {
     "staff.view",
     "staff.edit",
     "staff.salary",
+    "personnel.view",
+    "personnel.manage",
     "reports.view",
     "reports.export",
     "documents.view",
@@ -204,6 +213,7 @@ const _BASE: Record<RoleCode, Permission[]> = {
     "payments.manage",
     "payments.create",
     "staff.view",
+    "personnel.view",
     "reports.view",
     "documents.view",
   ]),

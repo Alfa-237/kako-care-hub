@@ -31,6 +31,9 @@ import {
 } from "@/hooks/use-planning";
 import { ChildScheduleDialog } from "@/components/planning/child-schedule-dialog";
 import { ScheduleExceptionDialog } from "@/components/planning/schedule-exception-dialog";
+import { useEmployees, useAllEmployeeSchedules } from "@/hooks/use-employees";
+import { StaffingAlertBanner } from "@/components/staff/staffing-alert-banner";
+import { getStaffingAlerts, getScheduleConflicts } from "@/lib/business/staffing";
 
 export const Route = createFileRoute("/planning")({
   head: () => ({
@@ -97,6 +100,8 @@ function Planning() {
   const childrenQuery = useChildSchedules();
   const exceptionsQuery = useScheduleExceptions();
   const sectionsQuery = useSections();
+  const employeesQuery = useEmployees();
+  const empSchedulesQuery = useAllEmployeeSchedules();
 
   const children = useMemo(() => db?.children ?? [], [db]);
   const schedules = useMemo(() => childrenQuery.data ?? [], [childrenQuery.data]);
@@ -127,6 +132,24 @@ function Planning() {
   const enableEdit = can("planning.update");
 
   const sortedLoads = [...loads].sort((a, b) => b.expected - a.expected);
+
+  const staffingAlerts = useMemo(() => {
+    if (!empSchedulesQuery.data) return [];
+    return getStaffingAlerts(
+      children,
+      schedules,
+      exceptions,
+      sections,
+      db?.employees ?? [],
+      empSchedulesQuery.data,
+      date,
+    );
+  }, [children, schedules, exceptions, sections, empSchedulesQuery.data, db?.employees, date]);
+
+  const staffingConflicts = useMemo(() => {
+    if (!empSchedulesQuery.data) return [];
+    return getScheduleConflicts(db?.employees ?? [], empSchedulesQuery.data);
+  }, [empSchedulesQuery.data, db?.employees]);
 
   return (
     <div className="space-y-5">
@@ -161,6 +184,8 @@ function Planning() {
           </div>
         }
       />
+
+      <StaffingAlertBanner staffingAlerts={staffingAlerts} conflicts={staffingConflicts} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1.5">

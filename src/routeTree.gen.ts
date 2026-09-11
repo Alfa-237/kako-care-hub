@@ -33,6 +33,7 @@ import { Route as UtilisateursRouteImport } from './routes/utilisateurs'
 import { Route as EnfantsIdRouteImport } from './routes/enfants.$id'
 import { Route as FamillesIndexRouteImport } from './routes/familles.index'
 import { Route as FamillesIdRouteImport } from './routes/familles.$id'
+import { Route as PersonnelEmployeeIdRouteImport } from './routes/personnel.$employeeId'
 import { Route as TransmissionsIndexRouteImport } from './routes/transmissions.index'
 import { Route as TransmissionsChildIdRouteImport } from './routes/transmissions.$childId'
 
@@ -156,6 +157,11 @@ const FamillesIdRoute = FamillesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => FamillesRoute,
 } as any)
+const PersonnelEmployeeIdRoute = PersonnelEmployeeIdRouteImport.update({
+  id: '/$employeeId',
+  path: '/$employeeId',
+  getParentRoute: () => PersonnelRoute,
+} as any)
 const TransmissionsIndexRoute = TransmissionsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -181,7 +187,7 @@ export interface FileRoutesByFullPath {
   '/inscriptions': typeof InscriptionsRoute
   '/paiements': typeof PaiementsRoute
   '/parametres': typeof ParametresRoute
-  '/personnel': typeof PersonnelRoute
+  '/personnel': typeof PersonnelRouteWithChildren
   '/planning': typeof PlanningRoute
   '/presences': typeof PresencesRoute
   '/rapports': typeof RapportsRoute
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/utilisateurs': typeof UtilisateursRoute
   '/enfants/$id': typeof EnfantsIdRoute
   '/familles/$id': typeof FamillesIdRoute
+  '/personnel/$employeeId': typeof PersonnelEmployeeIdRoute
   '/transmissions/$childId': typeof TransmissionsChildIdRoute
   '/familles/': typeof FamillesIndexRoute
   '/transmissions/': typeof TransmissionsIndexRoute
@@ -208,7 +215,7 @@ export interface FileRoutesByTo {
   '/inscriptions': typeof InscriptionsRoute
   '/paiements': typeof PaiementsRoute
   '/parametres': typeof ParametresRoute
-  '/personnel': typeof PersonnelRoute
+  '/personnel': typeof PersonnelRouteWithChildren
   '/planning': typeof PlanningRoute
   '/presences': typeof PresencesRoute
   '/rapports': typeof RapportsRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/utilisateurs': typeof UtilisateursRoute
   '/enfants/$id': typeof EnfantsIdRoute
   '/familles/$id': typeof FamillesIdRoute
+  '/personnel/$employeeId': typeof PersonnelEmployeeIdRoute
   '/transmissions/$childId': typeof TransmissionsChildIdRoute
   '/familles': typeof FamillesIndexRoute
   '/transmissions': typeof TransmissionsIndexRoute
@@ -236,7 +244,7 @@ export interface FileRoutesById {
   '/inscriptions': typeof InscriptionsRoute
   '/paiements': typeof PaiementsRoute
   '/parametres': typeof ParametresRoute
-  '/personnel': typeof PersonnelRoute
+  '/personnel': typeof PersonnelRouteWithChildren
   '/planning': typeof PlanningRoute
   '/presences': typeof PresencesRoute
   '/rapports': typeof RapportsRoute
@@ -246,6 +254,7 @@ export interface FileRoutesById {
   '/utilisateurs': typeof UtilisateursRoute
   '/enfants/$id': typeof EnfantsIdRoute
   '/familles/$id': typeof FamillesIdRoute
+  '/personnel/$employeeId': typeof PersonnelEmployeeIdRoute
   '/transmissions/$childId': typeof TransmissionsChildIdRoute
   '/familles/': typeof FamillesIndexRoute
   '/transmissions/': typeof TransmissionsIndexRoute
@@ -276,6 +285,7 @@ export interface FileRouteTypes {
     | '/utilisateurs'
     | '/enfants/$id'
     | '/familles/$id'
+    | '/personnel/$employeeId'
     | '/transmissions/$childId'
     | '/familles/'
     | '/transmissions/'
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/utilisateurs'
     | '/enfants/$id'
     | '/familles/$id'
+    | '/personnel/$employeeId'
     | '/transmissions/$childId'
     | '/familles'
     | '/transmissions'
@@ -330,6 +341,7 @@ export interface FileRouteTypes {
     | '/utilisateurs'
     | '/enfants/$id'
     | '/familles/$id'
+    | '/personnel/$employeeId'
     | '/transmissions/$childId'
     | '/familles/'
     | '/transmissions/'
@@ -349,7 +361,7 @@ export interface RootRouteChildren {
   InscriptionsRoute: typeof InscriptionsRoute
   PaiementsRoute: typeof PaiementsRoute
   ParametresRoute: typeof ParametresRoute
-  PersonnelRoute: typeof PersonnelRoute
+  PersonnelRoute: typeof PersonnelRouteWithChildren
   PlanningRoute: typeof PlanningRoute
   PresencesRoute: typeof PresencesRoute
   RapportsRoute: typeof RapportsRoute
@@ -529,6 +541,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FamillesIdRouteImport
       parentRoute: typeof FamillesRoute
     }
+    '/personnel/$employeeId': {
+      id: '/personnel/$employeeId'
+      path: '/$employeeId'
+      fullPath: '/personnel/$employeeId'
+      preLoaderRoute: typeof PersonnelEmployeeIdRouteImport
+      parentRoute: typeof PersonnelRoute
+    }
     '/transmissions/': {
       id: '/transmissions/'
       path: '/'
@@ -571,6 +590,18 @@ const FamillesRouteWithChildren = FamillesRoute._addFileChildren(
   FamillesRouteChildren,
 )
 
+interface PersonnelRouteChildren {
+  PersonnelEmployeeIdRoute: typeof PersonnelEmployeeIdRoute
+}
+
+const PersonnelRouteChildren: PersonnelRouteChildren = {
+  PersonnelEmployeeIdRoute: PersonnelEmployeeIdRoute,
+}
+
+const PersonnelRouteWithChildren = PersonnelRoute._addFileChildren(
+  PersonnelRouteChildren,
+)
+
 interface TransmissionsRouteChildren {
   TransmissionsChildIdRoute: typeof TransmissionsChildIdRoute
   TransmissionsIndexRoute: typeof TransmissionsIndexRoute
@@ -599,7 +630,7 @@ const rootRouteChildren: RootRouteChildren = {
   InscriptionsRoute: InscriptionsRoute,
   PaiementsRoute: PaiementsRoute,
   ParametresRoute: ParametresRoute,
-  PersonnelRoute: PersonnelRoute,
+  PersonnelRoute: PersonnelRouteWithChildren,
   PlanningRoute: PlanningRoute,
   PresencesRoute: PresencesRoute,
   RapportsRoute: RapportsRoute,

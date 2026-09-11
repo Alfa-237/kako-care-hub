@@ -55,6 +55,8 @@ export interface DashboardStats {
   medicalAlerts: number;
   staffPresent: number;
   staffTotal: number;
+  staffExpected: number;
+  staffingAlerts: number;
   occupancy: number;
   birthdays: Child[];
   expiringContracts: Child[];
@@ -96,8 +98,10 @@ export function computeDashboard(db: Database): DashboardStats {
     unpaidAmount: unpaid.reduce((s, i) => s + (i.total - i.discount - i.paidAmount), 0),
     missingDocuments: db.children.filter((c) => c.missingDocuments.length > 0).length,
     medicalAlerts: db.children.filter((c) => c.medicalAlert).length,
-    staffPresent: db.employees.filter((e) => e.presentToday).length,
+    staffPresent: db.employees.filter((e) => e.status === "actif").length,
     staffTotal: db.employees.length,
+    staffExpected: db.employees.filter((e) => e.status === "actif").length,
+    staffingAlerts: 0,
     occupancy: db.establishment.capacity
       ? Math.round((enrolledChildren.length / db.establishment.capacity) * 100)
       : 0,

@@ -13,6 +13,7 @@ export const sectionRecordSchema = z.object({
   ageMin: z.number(),
   ageMax: z.number(),
   capacity: z.number(),
+  ratio: z.number(),
   color: z.string(),
   isDemo: z.boolean(),
 });

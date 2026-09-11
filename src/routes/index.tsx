@@ -41,6 +41,7 @@ import {
 import { toast } from "sonner";
 import { localDateISO } from "@/lib/models/attendance";
 import { expectedChildrenCount } from "@/lib/business/planning";
+import { getStaffingAlerts, getExpectedStaff } from "@/lib/business/staffing";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -80,6 +81,21 @@ function Dashboard() {
     db.children,
     db.childSchedules ?? [],
     db.scheduleExceptions ?? [],
+    localDateISO(),
+  );
+
+  const staffAlerts = getStaffingAlerts(
+    db.children,
+    db.childSchedules ?? [],
+    db.scheduleExceptions ?? [],
+    db.sections ?? [],
+    db.employees,
+    db.employeeSchedules ?? [],
+    localDateISO(),
+  );
+  const staffExpectedToday = getExpectedStaff(
+    db.employees,
+    db.employeeSchedules ?? [],
     localDateISO(),
   );
 
@@ -316,6 +332,16 @@ function Dashboard() {
               hint="Équipe du jour"
             />
           </div>
+
+          <Link to="/personnel" className="block">
+            <StatCard
+              label="Personnel attendu aujourd'hui"
+              value={`${staffExpectedToday.size} · Alertes : ${staffAlerts.length}`}
+              icon={Users}
+              tone={staffAlerts.length ? "danger" : "success"}
+              hint="Cliquer pour gérer"
+            />
+          </Link>
         </section>
 
         <aside className="space-y-5">

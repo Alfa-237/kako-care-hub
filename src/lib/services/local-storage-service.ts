@@ -3,7 +3,7 @@
 // que la couche historique (db.ts) et déclenchent sa notification, afin que
 // les composants legacy (useDatabase) restent réactifs.
 import { initDatabase, mutate, onDatabaseChanged } from "../data/db";
-import type { Child, ChildParent, CollectionKey, Database, Parent, Section } from "../data/types";
+import type { Child, ChildParent, CollectionKey, Database, EmployeeSchedule, Parent, Section } from "../data/types";
 import { getFamilyViewById, listFamilies } from "../business/families";
 import type { FamilyRecord } from "../models/family";
 import type { AttendanceRecord } from "../models/attendance";
@@ -34,6 +34,7 @@ export const ID_PREFIXES: Partial<Record<CollectionKey, string>> = {
   authorizedPersons: "ap",
   childSchedules: "sch",
   scheduleExceptions: "exc",
+  employeeSchedules: "esch",
 };
 
 function collectionOf(db: Database, key: CollectionKey): Array<{ id: string }> {
@@ -597,6 +598,50 @@ class LocalStorageDataService implements IDataService {
           ? Math.round(((totalPresent + totalDepartAnticipe) / totalAttendu) * 100)
           : 0,
     };
+  }
+
+  // ---- Personnel (phase 8B)
+
+  async getEmployeeSchedules(): Promise<EmployeeSchedule[]> {
+    const db = await initDatabase();
+    return structuredClone(db.employeeSchedules ?? []);
+  }
+
+  async getEmployeeSchedule(employeeId: string): Promise<EmployeeSchedule | null> {
+    const db = await initDatabase();
+    const found = (db.employeeSchedules ?? []).find((s) => s.employeeId === employeeId);
+    return found ? structuredClone(found) : null;
+  }
+
+  async upsertEmployeeSchedule(schedule: EmployeeSchedule): Promise<EmployeeSchedule> {
+    let result: EmployeeSchedule | null = null;
+    await mutate((d) => {
+      d.employeeSchedules = d.employeeSchedules ?? [];
+      const idx = d.employeeSchedules.findIndex((s) => s.employeeId === schedule.employeeId);
+      const now = new Date().toISOString();
+      if (idx >= 0) {
+        d.employeeSchedules[idx] = {
+          ...schedule,
+          updatedAt: now,
+          id: d.employeeSchedules[idx]!.id,
+        };
+        result = structuredClone(d.employeeSchedules[idx]);
+      } else {
+        const created: EmployeeSchedule = {
+          ...schedule,
+          id: schedule.id || this.nextId("employeeSchedules", "esch"),
+          updatedAt: now,
+        };
+        d.employeeSchedules.push(created);
+        result = structuredClone(created);
+      }
+    });
+    if (!result) throw new Error("Échec de l'enregistrement du planning.");
+    return result;
+  }
+
+  async deleteEmployeeSchedule(id: string): Promise<boolean> {
+    return this.delete("employeeSchedules", id);
   }
 }
 
