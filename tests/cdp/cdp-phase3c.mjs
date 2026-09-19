@@ -508,6 +508,11 @@ async function connect() {
   wsAlive = true;
   await send("Runtime.enable");
   await send("Page.enable");
+  // Figer Date au 25 août 2026 (mardi) : le seed n'alimente pas le week-end
+  // (isWeekendDate) — sans freeze, le module est vide le samedi/dimanche réel.
+  await send("Page.addScriptToEvaluateOnNewDocument", {
+    source: `(() => { const RD = Date; const FT = new RD("2026-08-25T10:00:00.000Z").getTime(); const FD = function(...a) { return a.length === 0 ? new RD(FT) : new RD(...a); }; FD.now = () => FT; FD.parse = RD.parse; FD.UTC = RD.UTC; FD.prototype = RD.prototype; Object.setPrototypeOf(FD, RD); Date = FD; })()`,
+  });
   clearInterval(keepAlive);
   keepAlive = setInterval(() => {
     ev("1").catch(() => {});
@@ -518,7 +523,7 @@ let setupDone = false;
 let ctx = {};
 
 async function doSetup() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = await ev(`new Date().toISOString().slice(0, 10)`);
   ctx.today = today;
   await goto("/connexion");
   let resetOk = null;

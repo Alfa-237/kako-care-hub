@@ -146,6 +146,39 @@ async function clickOptionStable(text, maxTries = 8) {
   }
   return false;
 }
+// Clic sur une option du listbox DÉPART uniquement (scopé). Évite la contamination
+// par le listbox du filtre statut resté ouvert dans le DOM (les 2 rendent des
+// `[role="option"]` ; on cible le listbox qui contient « Autre personne… »).
+async function clickDepartureOption(text, maxTries = 8) {
+  const textMatch = JSON.stringify(text);
+  for (let i = 1; i <= maxTries; i++) {
+    const r = await ev(`(() => {
+      const lb = [...document.querySelectorAll('[role="listbox"]')].find(l => [...l.querySelectorAll('[role="option"]')].some(o => (o.textContent||'').includes('Autre personne')));
+      if (!lb) return 'NO_LB';
+      const el = [...lb.querySelectorAll('[role="option"]')].find(o => o.textContent.trim().includes(${textMatch}));
+      if (!el) return 'NO';
+      el.scrollIntoView({ block: 'center' });
+      const rect = el.getBoundingClientRect();
+      const cx = rect.x + rect.width / 2, cy = rect.y + rect.height / 2;
+      for (const t of ['pointerdown','mousedown','pointerup','mouseup','click']) {
+        const e = t.startsWith('pointer')
+          ? new PointerEvent(t, { bubbles: true, cancelable: true, button: 0, pointerId: 1, isPrimary: true, clientX: cx, clientY: cy, view: window })
+          : new MouseEvent(t, { bubbles: true, cancelable: true, button: 0, clientX: cx, clientY: cy, view: window });
+        el.dispatchEvent(e);
+      }
+      return 'OK';
+    })()`);
+    if (r === "OK") {
+      await sleep(500);
+      return true;
+    }
+    await sleep(400);
+  }
+  return false;
+}
+// Le listbox du départ (celui qui contient « Autre personne… ») parmi tous les listbox.
+const departureListboxExpr = `[...document.querySelectorAll('[role="listbox"]')].find(lb => [...lb.querySelectorAll('[role="option"]')].some(o => (o.textContent||'').includes('Autre personne')))`;
+
 async function typeInto(sel, text) {
   await ev(
     `(() => { const i = document.querySelector(${JSON.stringify(sel)}); if (i) i.focus(); })()`,
@@ -371,33 +404,35 @@ async function main() {
       6,
     );
     await sleep(800);
-    // Sélectionner une personne via le select Radix
-    await clickUntil("#departure-pickup", "", `!!document.querySelector('[role="listbox"]')`, 4);
+    // Sélectionner une personne via le select Radix — SCOPÉ au listbox du départ :
+    // le listbox du filtre statut (ouverte depuis T04) contamine le champ global
+    // `[role="option"]` ; on cible le listbox qui contient « Autre personne… ».
+    await clickUntil("#departure-pickup", "", `!!(${departureListboxExpr})`, 4);
     await sleep(800);
     const options = JSON.parse(
       (await ev(
-        `JSON.stringify([...document.querySelectorAll('[role="option"]')].map(o => o.textContent.trim()))`,
+        `JSON.stringify([...(${departureListboxExpr}||{querySelectorAll:()=>[]}).querySelectorAll('[role="option"]')].map(o => o.textContent.trim()))`,
       )) || "[]",
     );
     const personOpt = options.find((o) => !o.includes("Autre personne")) || options[0];
     if (personOpt) {
-      await clickOptionStable(personOpt);
+      await clickDepartureOption(personOpt);
       await sleep(800);
     }
     const selectVal = await ev(
       `document.querySelector('#departure-pickup')?.textContent?.trim() || ""`,
     );
     if (!selectVal || selectVal.includes("Choisir")) {
-      await clickUntil("#departure-pickup", "", `!!document.querySelector('[role="listbox"]')`, 3);
+      await clickUntil("#departure-pickup", "", `!!(${departureListboxExpr})`, 3);
       await sleep(600);
       const opts2 = JSON.parse(
         (await ev(
-          `JSON.stringify([...document.querySelectorAll('[role="option"]')].map(o => o.textContent.trim()))`,
+          `JSON.stringify([...(${departureListboxExpr}||{querySelectorAll:()=>[]}).querySelectorAll('[role="option"]')].map(o => o.textContent.trim()))`,
         )) || "[]",
       );
       const fallback = opts2.find((o) => !o.includes("Autre personne")) || opts2[0];
       if (fallback) {
-        await clickOptionStable(fallback);
+        await clickDepartureOption(fallback);
         await sleep(800);
       }
     }
